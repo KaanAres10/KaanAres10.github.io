@@ -37,7 +37,6 @@ jobs:
         working-directory: DirectVolume-Renderer
         run: chmod +x node_modules/vite/bin/vite.js || true
 
-      # Bulletproof call: run vite via node to bypass exec-bit issues
       - name: Build
         working-directory: DirectVolume-Renderer
         run: node ./node_modules/vite/bin/vite.js build
