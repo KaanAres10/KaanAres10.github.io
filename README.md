@@ -3,3 +3,6 @@ See the demo: [https://kaanares10.github.io/Volume-Rendering](https://kaanares10
 
 # OpenGL-Engine
 See the website: [https://kaanares10.github.io/OpenGL-Engine](https://kaanares10.github.io/OpenGL-Engine/)
+
+# Computer Graphics Final Project - Ray Traced Renderer
+See the website: [https://kaanares10.github.io/Computer-Graphics-Final-Project](https://kaanares10.github.io/Computer-Graphics-Final-Project/)
