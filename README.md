@@ -1,4 +1,7 @@
-# Portfolio
+<h1 align="center" style="font-size:10.5px; font-weight:800; margin-top:20px; margin-bottom:30px;">
+  Portfolio
+</h1>
+
 ---
 
 # Direct Volume Renderer
