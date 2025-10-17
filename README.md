@@ -1,4 +1,4 @@
-<h1 align="center" style="font-size:10.5px; font-weight:800; margin-top:20px; margin-bottom:30px;">
+<h1 align="center" style="font-size:48px; font-weight:800; margin-top:10px; margin-bottom:10px;">
   Portfolio
 </h1>
 
