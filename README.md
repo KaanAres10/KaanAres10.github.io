@@ -13,7 +13,7 @@ See the website: [https://kaanares10.github.io/OpenGL-Engine](https://kaanares10
 # Project Pursuit(Mixed-Reality experience VR and projection)
 See the website: [https://kaanares10.github.io/Project-PURSUIT/](https://kaanares10.github.io/Project-PURSUIT/)
 
-# Computer Graphics Final Project(Ray Traced Renderer)
+# Computer Graphics Final Project(Ray Trace Renderer)
 See the website: [https://kaanares10.github.io/Computer-Graphics-Final-Project](https://kaanares10.github.io/Computer-Graphics-Final-Project/)
 
 # License Plate Recognition
