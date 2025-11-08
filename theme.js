@@ -1,32 +1,30 @@
-<script>
-(() => {
-  const KEY = "theme";               
-  const docEl = document.documentElement;
+(function () {
+  const KEY = "theme";
+  const html = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const prefersLight = window.matchMedia("(prefers-color-scheme: light)");
 
-  function apply(mode){
-    if (mode === "light") docEl.setAttribute("data-theme","light");
-    else docEl.removeAttribute("data-theme");
-    localStorage.setItem(KEY, mode);
-    // update meta theme-color if present
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta){
-      const style = getComputedStyle(document.documentElement);
-      meta.setAttribute('content', style.getPropertyValue('--theme-color') || (mode==="light" ? "#ffffff" : "#0b0d10"));
-    }
-    // notify listeners
-    window.dispatchEvent(new CustomEvent("themechange", { detail:{ mode } }));
+  const stored = localStorage.getItem(KEY);
+  const mode = stored || (prefersLight.matches ? "light" : "dark");
+
+  setTheme(mode);
+
+  prefersLight.addEventListener("change", (e) => {
+    if (!stored) setTheme(e.matches ? "light" : "dark");
+  });
+
+  window.addEventListener("storage", (e) => {
+    if (e.key === KEY && e.newValue) setTheme(e.newValue);
+  });
+  
+  function setTheme(mode) {
+    html.classList.toggle("light", mode === "light");
+    if (meta) meta.setAttribute("content", mode === "light" ? "#ffffff" : "#0b0d10");
   }
 
-  window.__getTheme = () => localStorage.getItem(KEY) || (matchMedia('(prefers-color-scheme: light)').matches ? "light" : "dark");
-  window.__setTheme = (m) => apply(m);
-  window.__toggleTheme = () => apply(window.__getTheme()==="light" ? "dark":"light");
-
-  // initial
-  apply(localStorage.getItem(KEY) || (matchMedia('(prefers-color-scheme: light)').matches ? "light":"dark"));
-
-  // cross-tab sync
-  window.addEventListener("storage", (e)=>{
-    if (e.key === KEY && e.newValue) apply(e.newValue);
-  });
+  window.toggleTheme = function () {
+    const newMode = html.classList.contains("light") ? "dark" : "light";
+    localStorage.setItem(KEY, newMode);
+    setTheme(newMode);
+  };
 })();
-</script>
