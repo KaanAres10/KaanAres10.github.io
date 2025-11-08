@@ -1,15 +1,17 @@
 :root {
-  --bg: #0b0d10;
   --text: #e6edf3;
-  --muted: #97a0ad;
-  --line: #1b2129;
   --accent: #79a6ff;
+  --line: #1b2129;
+
+  --bg-dark: #0b0d10;
+  --bg-light: #ffffff;
 }
 
-:root.light {
-  --bg: #ffffff;
-  --text: #0b1020;
-  --muted: #5e6773;
-  --line: #e8edf3;
-  --accent: #1c7ed6;
+body {
+  background: var(--bg-dark);
+  color: var(--text);
+}
+
+html.light body {
+  background: var(--bg-light);
 }
