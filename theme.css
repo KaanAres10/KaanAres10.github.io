@@ -1,18 +1,15 @@
-/* default (dark) */
-:root{
-  color-scheme: dark;
-  --bg:#0b0d10; --text:#e6edf3; --muted:#97a0ad; --line:#1b2129; --accent:#79a6ff;
+:root {
+  --bg: #0b0d10;
+  --text: #e6edf3;
+  --muted: #97a0ad;
+  --line: #1b2129;
+  --accent: #79a6ff;
 }
 
-/* light */
-:root[data-theme="light"]{
-  color-scheme: light;
-  --bg:#ffffff; --text:#0b1020; --muted:#5e6773; --line:#e8edf3; --accent:#1c7ed6;
-}
-
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]) { --theme-color:#0b0d10; }
-}
-@media (prefers-color-scheme: light){
-  :root[data-theme="light"] { --theme-color:#ffffff; }
+:root.light {
+  --bg: #ffffff;
+  --text: #0b1020;
+  --muted: #5e6773;
+  --line: #e8edf3;
+  --accent: #1c7ed6;
 }
