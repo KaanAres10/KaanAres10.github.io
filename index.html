@@ -57,11 +57,10 @@
             display:inline-flex;
             align-items:center;
             gap:6px;
-            transition:all .2s ease;   /* smooth hover */
+            transition:all .2s ease;   
             cursor:pointer;
         }
-
-        /* Mode button: subtle accent hover */
+        
         .btn-github{
             background: linear-gradient(90deg, var(--accent), color-mix(in oklab, var(--accent) 70%, #0ca678));
             color:#fff;
@@ -124,6 +123,37 @@
             opacity: 0;
             transform: translateY(5px);
         }
+        .filter{
+            padding:6px 12px; border-radius:999px;
+            border:1px solid var(--line);
+            background: color-mix(in oklab, var(--bg) 94%, var(--line) 6%); /* subtle gray */
+            color: var(--muted);
+            font-weight:600; cursor:pointer; transition: all .2s ease;
+        }
+        .filter:hover{ transform: translateY(-1px); }
+
+        .filter[data-filter="all"]  { --pill-bg: var(--accent); --pill-txt:#fff; }
+        .filter[data-filter="cpp"]  { --pill-bg: #ff0c0c; --pill-txt:#fff; }
+        .filter[data-filter="csharp"]{ --pill-bg:#68217a; --pill-txt:#fff; }
+        .filter[data-filter="js"]   { --pill-bg:#f7df1e; --pill-txt:#111; }
+        .filter[data-filter="py"]   { --pill-bg:#3776ab; --pill-txt:#fff; }
+        .filter[data-filter="java"] { --pill-bg: #ff6a00; --pill-txt:#fff; }
+
+        .filter:hover,
+        .filter:focus-visible{
+            background: var(--pill-bg, var(--accent));
+            color: var(--pill-txt, #fff);
+            border-color: transparent;
+            box-shadow: 0 0 10px color-mix(in oklab, var(--pill-bg, var(--accent)) 35%, transparent);
+        }
+
+        .filter.active{
+            background: var(--pill-bg, var(--accent));
+            color: var(--pill-txt, #fff);
+            border-color: transparent;
+            box-shadow: 0 0 10px color-mix(in oklab, var(--pill-bg, var(--accent)) 35%, transparent);
+        }
+        .proj.hide{ display:none; }
         @media (max-width:560px){ .proj{ grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -133,7 +163,6 @@
         <div class="brand-group">
             <div class="brand">Kaan Altıntaş</div>
 
-            <!-- full GitHub button (same style) moved next to name -->
             <a class="btn btn-github" href="https://github.com/KaanAres10" target="_blank" rel="noreferrer">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
                     <path fill-rule="evenodd" clip-rule="evenodd"
@@ -157,8 +186,19 @@
     <section id="projects">
         <h2>Projects</h2>
         <div class="hr"></div>
+
+        <!-- Filter pills -->
+        <div class="filters" role="tablist" aria-label="Project filters">
+            <button class="filter active" data-filter="all" role="tab" aria-selected="true">All</button>
+            <button class="filter" data-filter="cpp" role="tab" aria-selected="false">C++</button>
+            <button class="filter" data-filter="csharp" role="tab" aria-selected="false">C#</button>
+            <button class="filter" data-filter="js" role="tab" aria-selected="false">JavaScript</button>
+            <button class="filter" data-filter="py" role="tab" aria-selected="false">Python</button>
+            <button class="filter" data-filter="java" role="tab" aria-selected="false">Java</button>
+        </div>
+
         <div class="projects">
-            <div class="proj">
+            <div class="proj" data-lang="js webgl glsl">
                 <div>
                     <div class="proj-title">Direct Volume Renderer</div>
                     <div class="meta">WebGL • GLSL • Transfer functions</div>
@@ -168,7 +208,7 @@
                 </div>
             </div>
 
-            <div class="proj">
+            <div class="proj" data-lang="cpp opengl">
                 <div>
                     <div class="proj-title">Custom Physically Based Renderer</div>
                     <div class="meta">OpenGL • Deferred • HDR • SSAO • IBL • Instancing</div>
@@ -178,7 +218,7 @@
                 </div>
             </div>
 
-            <div class="proj">
+            <div class="proj" data-lang="unity csharp">
                 <div>
                     <div class="proj-title">Project PURSUIT (Mixed Reality VR Game)</div>
                     <div class="meta">Unity • VR • Tracked Projector</div>
@@ -188,7 +228,7 @@
                 </div>
             </div>
 
-            <div class="proj">
+            <div class="proj" data-lang="cpp">
                 <div>
                     <div class="proj-title">CG Final Project (Ray Trace Renderer)</div>
                     <div class="meta">C++ • BVH • Shaders • DoF</div>
@@ -198,7 +238,7 @@
                 </div>
             </div>
 
-            <div class="proj">
+            <div class="proj" data-lang="py python">
                 <div>
                     <div class="proj-title">License Plate Recognition</div>
                     <div class="meta">Python • OpenCV • Detection</div>
@@ -208,7 +248,7 @@
                 </div>
             </div>
 
-            <div class="proj">
+            <div class="proj" data-lang="cpp ispc">
                 <div>
                     <div class="proj-title">Newton Fractal (ISPC)</div>
                     <div class="meta">ISPC • Complex root finding</div>
@@ -216,6 +256,25 @@
                 <div class="links">
                     <a href="https://kaanares10.github.io/NewtonFractal-ISPC/">Website →</a>
                 </div>
+            </div>
+        </div>
+        <div class="proj" data-lang="java">
+            <div>
+                <div class="proj-title">NetNote</div>
+                <div class="meta">Java • Notes / Productivity</div>
+            </div>
+            <div class="links">
+                <a href="https://kaanares10.github.io/NetNote/">Website →</a>
+            </div>
+        </div>
+
+        <div class="proj" data-lang="java">
+            <div>
+                <div class="proj-title">Splitty</div>
+                <div class="meta">Java • Bill Splitter / Utilities</div>
+            </div>
+            <div class="links">
+                <a href="https://kaanares10.github.io/Splitty/">Website →</a>
             </div>
         </div>
     </section>
@@ -255,7 +314,6 @@
 
     const moonSVG = `
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-    <!-- outlined crescent -->
     <path d="M21 12.8A9.2 9.2 0 0 1 11.2 3
              a7.2 7.2 0 1 0 9.8 9.8Z"
           stroke-width="1"
@@ -290,8 +348,29 @@
         updateButton(true);
     });
 
-    // Year
     document.getElementById('year').textContent = new Date().getFullYear();
+
+    const filterBtns = document.querySelectorAll('.filter');
+    const cards = document.querySelectorAll('.proj');
+
+    function applyFilter(key){
+        const k = key.toLowerCase();
+        cards.forEach(c=>{
+            if (k === 'all') { c.classList.remove('hide'); return; }
+            const langs = (c.dataset.lang || '').toLowerCase().split(/\s+/);
+            if (langs.includes(k)) c.classList.remove('hide');
+            else c.classList.add('hide');
+        });
+    }
+    filterBtns.forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+            filterBtns.forEach(b=>b.classList.remove('active'));
+            btn.classList.add('active');
+            applyFilter(btn.dataset.filter);
+            filterBtns.forEach(b=>b.setAttribute('aria-selected', b===btn ? 'true' : 'false'));
+        });
+    });
+    applyFilter('all');
 </script>
 </body>
 </html>
