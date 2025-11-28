@@ -1,112 +1,200 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Kaan Altıntaş — Portfolio</title>
-    <meta name="description"/>
+    <meta name="description" content="Portfolio of Kaan Altıntaş — computer graphics, GPU programming, and interactive rendering projects." />
     <meta name="color-scheme" content="light dark" />
     <style>
-        :root{ --bg:#0b0d10; --text:#e6edf3; --muted:#97a0ad; --line:#1b2129; --accent:#79a6ff; }
-        :root.light{ --bg:#ffffff; --text:#0b1020; --muted:#5e6773; --line:#e8edf3; --accent:#1c7ed6; }
-
-        *{ box-sizing:border-box; }
-        html,body{ height:100%; }
-        body{
-            margin:0; background:var(--bg); color:var(--text);
-            font: 17px/1.7 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-            -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+        :root {
+            --bg: #050814;
+            --bg-soft: #0b1020;
+            --text: #e6edf3;
+            --muted: #97a0ad;
+            --line: #212636;
+            --accent: #79a6ff;
+            --accent-soft: rgba(121,166,255,0.2);
+            --card: rgba(11,16,32,0.92);
+            --shadow: 0 18px 45px rgba(0,0,0,0.55);
+            --radius-xl: 18px;
         }
-        a{ color:inherit; text-underline-offset:3px; text-decoration-thickness: .08em; }
-        a:hover{ color:var(--accent); }
+        :root.light {
+            --bg: #f5f7fb;
+            --bg-soft: #ffffff;
+            --text: #0b1020;
+            --muted: #5e6773;
+            --line: #dde3ee;
+            --accent: #1c7ed6;
+            --accent-soft: rgba(28,126,214,0.10);
+            --card: #ffffff;
+            --shadow: 0 16px 35px rgba(15,23,42,0.08);
+            --radius-xl: 16px;
+        }
 
-        .wrap{ max-width: 800px; margin: 0 auto; padding: 24px 16px 56px; }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font: 16px/1.7 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        a {
+            color: inherit;
+            text-underline-offset: 3px;
+            text-decoration-thickness: .08em;
+        }
+        a:hover { color: var(--accent); }
+
+        .wrap {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 80px 20px 60px;
+        }
 
         /* header */
-        header{ position:sticky; top:0; background:color-mix(in oklab, var(--bg) 92%, transparent); backdrop-filter:saturate(120%) blur(6px); border-bottom:1px solid var(--line); }
-        .bar{ max-width:800px; margin:0 auto; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
-        .brand{ font-weight:800; letter-spacing:.2px; }
-        .right{ display:flex; align-items:center; gap:12px; }
-        .btn{ border:1px solid var(--line); padding:6px 10px; border-radius:10px; text-decoration:none; }
-
-        /* hero */
-        h1{ font-size: clamp(22px, 3.2vw, 34px); line-height:1.2; margin:18px 0 6px; font-weight:800; }
-        .lede{ color:var(--muted); margin:0 0 18px; }
-
-        /* section */
-        section{ margin: 28px 0; }
-        h2{ font-size: 14px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin: 0 0 10px; }
-        .hr{ height:1px; background:var(--line); margin:10px 0 16px; }
-
-        /* projects list */
-        .projects{ display:flex; flex-direction:column; gap:14px; }
-        .proj{ display:grid; grid-template-columns: 1fr auto; gap:10px; padding:10px 0; border-bottom:1px dashed var(--line); }
-        .proj:last-child{ border-bottom:0; }
-        .proj-title{ font-weight:600; }
-        .meta{ color:var(--muted); font-size:14px; }
-        .links{ display:flex; gap:8px; }
-
-        /* footer */
-        footer{ border-top:1px solid var(--line); margin-top:36px; }
-        .foot{ max-width:800px; margin:0 auto; padding:16px; color:var(--muted); display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; }
-        .btn{
-            border:1px solid var(--line);
-            padding:6px 10px;
-            border-radius:10px;
-            text-decoration:none;
-            display:inline-flex;
-            align-items:center;
-            gap:6px;
-            transition:all .2s ease;
-            cursor:pointer;
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            border-bottom: 1px solid color-mix(in oklab, var(--line) 90%, transparent);
+            background: linear-gradient(
+                    to bottom,
+                    color-mix(in oklab, var(--bg) 92%, transparent) 0,
+                    color-mix(in oklab, var(--bg) 96%, transparent) 60%,
+                    transparent 100%
+            );
+            backdrop-filter: saturate(120%) blur(12px);
         }
 
-        .btn-github{
-            background: linear-gradient(90deg, var(--accent), color-mix(in oklab, var(--accent) 70%, #0ca678));
-            color:#fff;
-            border:none;
-            font-weight:600;
-            padding:6px 14px;
+        .bar {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
         }
-        .btn-github:hover{
-            filter:brightness(1.1);
-            box-shadow:0 0 10px color-mix(in oklab, var(--accent) 35%, transparent);
+
+        .brand-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-block {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .brand {
+            font-weight: 800;
+            letter-spacing: .3px;
+            font-size: 18px;
+        }
+
+        .brand-sub {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .14em;
+            color: var(--muted);
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        nav a {
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            text-decoration: none;
+            color: var(--muted);
+            transition: background .2s ease, color .2s ease, border-color .2s ease;
+        }
+
+        nav a:hover {
+            color: var(--accent);
+            border-color: color-mix(in oklab, var(--accent) 35%, transparent);
+            background: color-mix(in oklab, var(--bg) 88%, var(--accent) 12%);
+        }
+
+        .right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            border: 1px solid var(--line);
+            padding: 6px 10px;
+            border-radius: 10px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all .2s ease;
+            cursor: pointer;
+            font-size: 14px;
+            background: color-mix(in oklab, var(--bg-soft) 94%, var(--line) 6%);
+        }
+
+        .btn:hover {
             transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(0,0,0,0.35);
         }
-        .brand-group{
-            display:flex;
-            align-items:center;
-            gap:12px;
+
+        .btn-github {
+            background: linear-gradient(120deg, var(--accent), color-mix(in oklab, var(--accent) 65%, #0ca678));
+            color: #fff;
+            border: none;
+            font-weight: 600;
+            padding: 7px 14px;
+            box-shadow: 0 14px 30px rgba(0,0,0,0.4);
+        }
+
+        .btn-github svg { flex-shrink: 0; }
+
+        .btn-github:hover {
+            filter: brightness(1.08);
+            box-shadow: 0 18px 35px rgba(0,0,0,0.55);
+            transform: translateY(-1px);
         }
 
         .btn-mode {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 14px;
             border-radius: 999px;
             border: 1px solid color-mix(in oklab, var(--accent) 30%, transparent);
-            background: color-mix(in oklab, var(--bg) 92%, var(--accent) 8%);
+            background: color-mix(in oklab, var(--bg-soft) 92%, var(--accent) 10%);
             color: var(--accent);
             font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            transition: all 0.35s ease;
-            overflow: hidden;
+            font-size: 14px;
+            padding: 7px 14px;
             position: relative;
+            overflow: hidden;
         }
 
         .btn-mode:hover {
-            background: linear-gradient(90deg, var(--accent), #0ca678);
+            background: linear-gradient(120deg, var(--accent), #0ca678);
             color: #fff;
-            box-shadow: 0 0 12px color-mix(in oklab, var(--accent) 35%, transparent);
+            box-shadow: 0 15px 34px rgba(0,0,0,0.45);
             transform: translateY(-1px);
         }
 
         .btn-mode .icon {
             display: inline-flex;
-            width: 22px;
-            height: 22px;
+            width: 20px;
+            height: 20px;
             transition: transform 0.4s ease, opacity 0.3s ease;
         }
 
@@ -123,46 +211,428 @@
             opacity: 0;
             transform: translateY(5px);
         }
-        .filter{
-            padding:6px 12px; border-radius:999px;
-            border:1px solid var(--line);
-            background: color-mix(in oklab, var(--bg) 94%, var(--line) 6%); /* subtle gray */
+
+        /* hero */
+        .hero {
+            display: grid;
+            grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.6fr);
+            gap: 26px;
+            align-items: center;
+        }
+
+        @media (max-width: 720px) {
+            .hero {
+                grid-template-columns: minmax(0,1fr);
+            }
+            .wrap {
+                padding-top: 70px;
+            }
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            border: 1px solid color-mix(in oklab, var(--accent) 20%, transparent);
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .16em;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-size: clamp(26px, 3.4vw, 34px);
+            line-height: 1.15;
+            margin: 0 0 10px;
+            font-weight: 800;
+        }
+
+        .lede {
             color: var(--muted);
-            font-weight:600; cursor:pointer; transition: all .2s ease;
-        }
-        .filter:hover{ transform: translateY(-1px); }
-
-        .filter[data-filter="all"]  { --pill-bg: var(--accent); --pill-txt:#fff; }
-        .filter[data-filter="cpp"]  { --pill-bg: #ff0c0c; --pill-txt:#fff; }
-        .filter[data-filter="csharp"]{ --pill-bg:#68217a; --pill-txt:#fff; }
-        .filter[data-filter="js"]   { --pill-bg:#f7df1e; --pill-txt:#111; }
-        .filter[data-filter="py"]   { --pill-bg:#3776ab; --pill-txt:#fff; }
-        .filter[data-filter="java"] { --pill-bg: #ff6a00; --pill-txt:#fff; }
-
-        .filter:hover,
-        .filter:focus-visible{
-            background: var(--pill-bg, var(--accent));
-            color: var(--pill-txt, #fff);
-            border-color: transparent;
-            box-shadow: 0 0 10px color-mix(in oklab, var(--pill-bg, var(--accent)) 35%, transparent);
+            margin: 0 0 18px;
+            max-width: 34rem;
         }
 
-        .filter.active{
-            background: var(--pill-bg, var(--accent));
-            color: var(--pill-txt, #fff);
-            border-color: transparent;
-            box-shadow: 0 0 10px color-mix(in oklab, var(--pill-bg, var(--accent)) 35%, transparent);
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--muted);
         }
-        .proj.hide{ display:none; }
-        @media (max-width:560px){ .proj{ grid-template-columns: 1fr; } }
+
+        .hero-meta span {
+            padding: 4px 9px;
+            border-radius: 999px;
+            border: 1px solid color-mix(in oklab, var(--line) 80%, transparent);
+            background: color-mix(in oklab, var(--bg-soft) 92%, var(--line) 8%);
+        }
+
+        .hero-card {
+            border-radius: var(--radius-xl);
+            padding: 14px 16px;
+            background: radial-gradient(circle at top left, var(--accent-soft) 0, var(--card) 50%);
+            border: 1px solid color-mix(in oklab, var(--line) 80%, transparent);
+            box-shadow: var(--shadow);
+            font-size: 13px;
+            color: var(--muted);
+            backdrop-filter: blur(14px);
+        }
+
+        .hero-card-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: .16em;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .hero-highlight {
+            font-size: 15px;
+            color: var(--text);
+            margin-top: 8px;
+        }
+
+        /* sections */
+        section {
+            margin: 30px 0;
+        }
+
+        h2 {
+            font-size: 13px;
+            letter-spacing: .16em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin: 0 0 8px;
+        }
+
+        .hr {
+            height: 1px;
+            background: linear-gradient(90deg,
+            transparent 0,
+            color-mix(in oklab, var(--line) 85%, transparent) 15%,
+            color-mix(in oklab, var(--accent) 30%, transparent) 45%,
+            color-mix(in oklab, var(--line) 85%, transparent) 80%,
+            transparent 100%);
+            margin: 4px 0 18px;
+        }
+
+        /* iOS-style segmented control */
+        .filters {
+            --seg-radius: 999px;
+            --seg-bg: color-mix(in oklab, var(--bg-soft) 92%, var(--line) 8%);
+            --seg-left: 3px;
+            --seg-width: 0px;
+            --seg-color: var(--accent); /* default highlight color */
+
+            position: relative;
+            display: inline-flex;
+            padding: 3px;
+            border-radius: var(--seg-radius);
+            background: var(--seg-bg);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+            gap: 0;
+        }
+
+        /* sliding highlight */
+        .filters::before {
+            content: "";
+            position: absolute;
+            top: 3px;
+            bottom: 3px;
+            left: var(--seg-left);
+            width: var(--seg-width);
+            border-radius: var(--seg-radius);
+            background: var(--seg-color);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+            transition:
+                    left .24s cubic-bezier(0.25,0.8,0.25,1),
+                    width .24s cubic-bezier(0.25,0.8,0.25,1),
+                    background .18s ease-out;
+            z-index: 0;
+        }
+
+        /* each pill */
+        .filter {
+            position: relative;
+            z-index: 1;
+            border: none;
+            background: none;
+            padding: 6px 14px;
+            border-radius: var(--seg-radius);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            text-align: center;
+            white-space: nowrap;
+            transition: color .18s ease, transform .08s ease;
+        }
+
+        .filter:active {
+            transform: scale(0.97);
+        }
+
+        .filter.active {
+            color: #0b1020; /* dark text on colored pill */
+        }
+
+        html.light .filter.active {
+            color: #0b1020;
+        }
+
+        /* hover */
+        .filter:hover:not(.active) {
+            color: var(--accent);
+        }
+
+        /* light mode tweaks */
+        html.light .filters {
+            box-shadow: 0 8px 20px rgba(15,23,42,0.12);
+        }
+
+        /* per-language pill color (background via --seg-color) */
+        .filters[data-active="all"]  { --seg-color: var(--accent); }
+        .filters[data-active="cpp"]  { --seg-color: #ff6b6b; }
+        .filters[data-active="csharp"] { --seg-color: #a855f7; }
+        .filters[data-active="js"]   { --seg-color: #facc15; }
+        .filters[data-active="py"]   { --seg-color: #38bdf8; }
+        .filters[data-active="java"] { --seg-color: #fb923c; }
+
+        .filter[data-filter="cpp"].active {
+            color: #ffffff !important;
+        }
+        .filter[data-filter="py"].active {
+            color: #ffffff !important;
+        }
+        .filter[data-filter="all"].active {
+            color: #ffffff !important;
+        }
+
+
+        /* projects list */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: minmax(0,1fr);
+            gap: 12px;
+        }
+
+        @media (min-width: 720px) {
+            .projects-grid {
+                grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+            }
+        }
+
+        .proj {
+            border-radius: var(--radius-xl);
+            padding: 14px 15px;
+            border: 1px solid color-mix(in oklab, var(--line) 90%, transparent);
+            background: color-mix(in oklab, var(--bg-soft) 90%, #020617 10%);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+            transform: translateY(0);
+            transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+            box-shadow: 0 10px 26px rgba(0,0,0,0.38);
+        }
+
+        .proj::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top right,
+            color-mix(in oklab, var(--accent) 10%, transparent) 0,
+            transparent 55%);
+            opacity: 0;
+            transition: opacity .18s ease;
+            pointer-events: none;
+        }
+
+        .proj:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 18px 40px rgba(0,0,0,0.55);
+            border-color: color-mix(in oklab, var(--accent) 40%, var(--line) 60%);
+            background: color-mix(in oklab, var(--bg-soft) 92%, var(--accent) 8%);
+        }
+
+        .proj:hover::before {
+            opacity: 1;
+        }
+
+        .proj-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .proj-title {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+            font-size: 11px;
+        }
+
+        .tag-pill {
+            padding: 3px 7px;
+            border-radius: 999px;
+            background: color-mix(in oklab, var(--bg-soft) 88%, var(--accent) 12%);
+            color: var(--accent);
+            border: 1px solid color-mix(in oklab, var(--accent) 40%, transparent);
+        }
+
+        .links {
+            display: flex;
+            gap: 8px;
+            font-size: 13px;
+            margin-top: 2px;
+        }
+
+        .links a {
+            padding: 4px 8px;
+            min-width: 400px;
+            border-radius: 999px;
+            border: 1px solid color-mix(in oklab, var(--accent) 35%, transparent);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .links a:hover {
+            background: color-mix(in oklab, var(--accent) 20%, transparent);
+            color: var(--accent);
+        }
+
+        .proj.hide { display: none; }
+
+        /* project thumbnail */
+        .proj-thumb {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 16 / 9;
+            background: radial-gradient(circle at top, rgba(148,163,184,0.35), rgba(15,23,42,0.95));
+        }
+
+        .proj-thumb img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+        }
+
+        /* about & contact */
+        #about .lede {
+            max-width: 40rem;
+        }
+
+        #contact p {
+            font-size: 15px;
+        }
+
+        #contact a {
+            font-weight: 500;
+        }
+
+        #contact span {
+            color: var(--muted);
+            margin: 0 4px;
+        }
+
+        /* footer */
+        footer {
+            border-top: 1px solid var(--line);
+            margin-top: 32px;
+            background: color-mix(in oklab, var(--bg-soft) 92%, transparent);
+        }
+
+        .foot {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 14px 18px 18px;
+            color: var(--muted);
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            font-size: 13px;
+        }
+
+        .foot a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+
+        .foot a:hover {
+            color: var(--accent);
+            text-decoration: underline;
+        }
+
+        /* subtle entrance animation */
+        @keyframes float-up {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero,
+        .projects-grid,
+        #about,
+        #contact {
+            animation: float-up .45s ease-out both;
+        }
+
+        .proj:nth-child(1) { animation: float-up .45s ease-out both .05s; }
+        .proj:nth-child(2) { animation: float-up .45s ease-out both .1s; }
+        .proj:nth-child(3) { animation: float-up .45s ease-out both .15s; }
+        .proj:nth-child(4) { animation: float-up .45s ease-out both .2s; }
+        .proj:nth-child(5) { animation: float-up .45s ease-out both .25s; }
+        .proj:nth-child(6) { animation: float-up .45s ease-out both .3s; }
+        .proj:nth-child(7) { animation: float-up .45s ease-out both .35s; }
+        .proj:nth-child(8) { animation: float-up .45s ease-out both .4s; }
+
+        @media (max-width: 640px) {
+            .bar {
+                padding-inline: 14px;
+                gap: 10px;
+            }
+            nav { display: none; }
+            .btn-github span { display: none; }
+            .btn-github { padding-inline: 9px; }
+        }
     </style>
 </head>
 <body>
 <header>
     <div class="bar">
         <div class="brand-group">
-            <div class="brand">Kaan Altıntaş</div>
-
+            <div class="brand-block">
+                <div class="brand">Kaan Altıntaş</div>
+            </div>
             <a class="btn btn-github" href="https://github.com/KaanAres10" target="_blank" rel="noreferrer">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
                     <path fill-rule="evenodd" clip-rule="evenodd"
@@ -171,16 +641,26 @@
                 <span>GitHub</span>
             </a>
         </div>
-        <button id="themeBtn" class="btn btn-mode mode-fixed" aria-label="Toggle theme">
-            <span class="icon"></span>
-            <span class="label">Light</span>
-        </button>    </div>
+
+        <div class="right">
+            <nav>
+                <a href="#projects">Projects</a>
+                <a href="#about">About</a>
+                <a href="#contact">Contact</a>
+            </nav>
+            <button id="themeBtn" class="btn btn-mode mode-fixed" aria-label="Toggle theme">
+                <span class="icon"></span>
+                <span class="label">Light</span>
+            </button>
+        </div>
+    </div>
 </header>
 
 <main class="wrap">
-    <section>
-        <h1>Portfolio</h1>
-        <p class="lede">Here below you can find my projects</p>
+    <section class="hero">
+        <div>
+            <h1>Portfolio</h1>
+        </div>
     </section>
 
     <section id="projects">
@@ -197,105 +677,167 @@
             <button class="filter" data-filter="java" role="tab" aria-selected="false">Java</button>
         </div>
 
-        <div class="projects">
-            <div class="proj" data-lang="js webgl glsl">
-                <div>
-                    <div class="proj-title">Direct Volume Renderer</div>
-                    <div class="meta">Three.js • GLSL • Transfer functions</div>
+        <div class="projects-grid">
+            <article class="proj" data-lang="js glsl">
+                <div class="proj-thumb">
+                    <img src="images/volume-renderer.png" alt="Direct Volume Renderer preview">
+                </div>
+                <div class="proj-header">
+                    <div>
+                        <div class="proj-title">Direct Volume Renderer</div>
+                        <div class="meta">Three.js • GLSL • Transfer functions</div>
+                    </div>
                 </div>
                 <div class="links">
-                    <a href="https://kaanares10.github.io/Volume-Rendering/">Demo →</a>
+                    <a href="https://kaanares10.github.io/Volume-Rendering/" target="_blank" rel="noreferrer">
+                        Demo →
+                    </a>
                 </div>
-            </div>
+            </article>
 
-            <div class="proj" data-lang="cpp opengl">
-                <div>
-                    <div class="proj-title">Custom Physically Based Renderer</div>
-                    <div class="meta">OpenGL • Deferred • HDR • SSAO • IBL • Instancing</div>
+            <article class="proj" data-lang="cpp opengl">
+                <div class="proj-thumb">
+                    <img src="images/opengl-engine.png" alt="Custom Physically Based Renderer preview">
+                </div>
+                <div class="proj-header">
+                    <div>
+                        <div class="proj-title">Custom Physically Based Renderer</div>
+                        <div class="meta">OpenGL • Deferred • HDR • SSAO • IBL • Instancing</div>
+                    </div>
                 </div>
                 <div class="links">
-                    <a href="https://kaanares10.github.io/OpenGL-Engine/">Website →</a>
+                    <a href="https://kaanares10.github.io/OpenGL-Engine/" target="_blank" rel="noreferrer">
+                        Website →
+                    </a>
                 </div>
-            </div>
+            </article>
 
-            <div class="proj" data-lang="unity csharp">
-                <div>
-                    <div class="proj-title">Project PURSUIT (Mixed Reality VR Game)</div>
-                    <div class="meta">Unity • VR • Tracked Projector</div>
+            <article class="proj" data-lang="unity csharp">
+                <div class="proj-thumb">
+                    <img src="images/project-pursuit.png" alt="Project PURSUIT Mixed Reality VR Game preview">
+                </div>
+                <div class="proj-header">
+                    <div>
+                        <div class="proj-title">Project PURSUIT (Mixed Reality VR Game)</div>
+                        <div class="meta">Unity • VR • Tracked Projector</div>
+                    </div>
                 </div>
                 <div class="links">
-                    <a href="https://kaanares10.github.io/Project-PURSUIT/">Website →</a>
+                    <a href="https://kaanares10.github.io/Project-PURSUIT/" target="_blank" rel="noreferrer">
+                        Website →
+                    </a>
                 </div>
-            </div>
+            </article>
 
-            <div class="proj" data-lang="cpp">
-                <div>
-                    <div class="proj-title">CG Final Project (Ray Trace Renderer)</div>
-                    <div class="meta">C++ • BVH • Shaders • DoF</div>
+            <article class="proj" data-lang="cpp">
+                <div class="proj-thumb">
+                    <img src="images/cg-final-raytracer.png" alt="CG Final Ray Trace Renderer preview">
+                </div>
+                <div class="proj-header">
+                    <div>
+                        <div class="proj-title">CG Final Project (Ray Trace Renderer)</div>
+                        <div class="meta">C++ • BVH • Shaders • DoF</div>
+                    </div>
                 </div>
                 <div class="links">
-                    <a href="https://kaanares10.github.io/Computer-Graphics-Final-Project/">Website →</a>
+                    <a href="https://kaanares10.github.io/Computer-Graphics-Final-Project/" target="_blank" rel="noreferrer">
+                        Website →
+                    </a>
                 </div>
-            </div>
+            </article>
 
-            <div class="proj" data-lang="py python">
-                <div>
-                    <div class="proj-title">License Plate Recognition</div>
-                    <div class="meta">Python • OpenCV • Detection</div>
+            <article class="proj" data-lang="py python">
+                <div class="proj-thumb">
+                    <img src="images/license-plate-recognition.png" alt="License Plate Recognition preview">
+                </div>
+                <div class="proj-header">
+                    <div>
+                        <div class="proj-title">License Plate Recognition</div>
+                        <div class="meta">Python • OpenCV • Detection</div>
+                    </div>
                 </div>
                 <div class="links">
-                    <a href="https://kaanares10.github.io/License-Plate-Recognition/">Website →</a>
+                    <a href="https://kaanares10.github.io/License-Plate-Recognition/" target="_blank" rel="noreferrer">
+                        Website →
+                    </a>
                 </div>
-            </div>
+            </article>
 
-            <div class="proj" data-lang="cpp ispc">
-                <div>
-                    <div class="proj-title">Newton Fractal (ISPC)</div>
-                    <div class="meta">ISPC • Complex root finding</div>
+            <article class="proj" data-lang="cpp ispc">
+                <div class="proj-thumb">
+                    <img src="images/newton-fractal-ispc.png" alt="Newton Fractal ISPC preview">
+                </div>
+                <div class="proj-header">
+                    <div>
+                        <div class="proj-title">Newton Fractal (ISPC)</div>
+                        <div class="meta">ISPC • Complex root finding</div>
+                    </div>
                 </div>
                 <div class="links">
-                    <a href="https://kaanares10.github.io/NewtonFractal-ISPC/">Website →</a>
+                    <a href="https://kaanares10.github.io/NewtonFractal-ISPC/" target="_blank" rel="noreferrer">
+                        Website →
+                    </a>
                 </div>
-            </div>
-        </div>
-        <div class="proj" data-lang="java">
-            <div>
-                <div class="proj-title">NetNote</div>
-                <div class="meta">Java • Notes / Productivity</div>
-            </div>
-            <div class="links">
-                <a href="https://kaanares10.github.io/NetNote/">Website →</a>
-            </div>
-        </div>
+            </article>
 
-        <div class="proj" data-lang="java">
-            <div>
-                <div class="proj-title">Splitty</div>
-                <div class="meta">Java • Bill Splitter / Utilities</div>
-            </div>
-            <div class="links">
-                <a href="https://kaanares10.github.io/Splitty/">Website →</a>
-            </div>
+            <article class="proj" data-lang="java">
+                <div class="proj-header">
+                    <div>
+                        <div class="proj-title">NetNote</div>
+                        <div class="meta">Java • Notes / Productivity</div>
+                    </div>
+                </div>
+                <div class="links">
+                    <a href="https://kaanares10.github.io/NetNote/" target="_blank" rel="noreferrer">
+                        Website →
+                    </a>
+                </div>
+            </article>
+
+            <article class="proj" data-lang="java">
+                <div class="proj-header">
+                    <div>
+                        <div class="proj-title">Splitty</div>
+                        <div class="meta">Java • Bill Splitter / Utilities</div>
+                    </div>
+                </div>
+
+                <div class="links">
+                    <a href="https://kaanares10.github.io/Splitty/" target="_blank" rel="noreferrer">
+                        Website →
+                    </a>
+                </div>
+            </article>
         </div>
     </section>
 
     <section id="about">
         <h2>About</h2>
         <div class="hr"></div>
-        <p class="lede">Hi, I'm a CS Student and have a huge passion into Computer Graphics, currently working project like Real-Time Rendering, AR/VR Interactions.</p>
+        <p class="lede">
+            I’m a computer science student passionate about scalable systems and advanced computing applications.
+            Experienced in developing applications across computer graphics, visualization, and interactive
+            technologies alongside backend and desktop development.
+        </p>
     </section>
 
     <section id="contact">
         <h2>Contact</h2>
         <div class="hr"></div>
-        <p>Email: <a href="mailto:kaanaltiintas@outlook.com">kaanaltiintas@outlook.com</a>
-            GitHub: <a href="https://github.com/KaanAres10" target="_blank" rel="noreferrer">@KaanAres10</a></p>
+        <p>
+            Email:
+            <a href="mailto:kaanaltiintas@outlook.com">kaanaltiintas@outlook.com</a>
+            <span>•</span>
+            GitHub:
+            <a href="https://github.com/KaanAres10" target="_blank" rel="noreferrer">@KaanAres10</a>
+        </p>
     </section>
 </main>
 
 <footer>
     <div class="foot">
         <div>© <span id="year"></span> Kaan Altıntaş</div>
+        <div>Built with HTML, CSS & a bit of JavaScript.</div>
     </div>
 </footer>
 
@@ -308,18 +850,18 @@
     const labelSpan = themeBtn.querySelector('.label');
 
     const sunSVG = `
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 4.5a1 1 0 0 1 1-1h0a1 1 0 1 1 0 2h0a1 1 0 0 1-1-1zm0 14a1 1 0 0 1 1-1h0a1 1 0 1 1 0 2h0a1 1 0 0 1-1-1zM4.5 13a1 1 0 0 1 1-1h0a1 1 0 1 1 0 2h0a1 1 0 0 1-1-1zm14-1a1 1 0 1 1 0 2h0a1 1 0 1 1 0-2zM6.34 6.34a1 1 0 0 1 1.41 0h0a1 1 0 1 1-1.41 1.41h0a1 1 0 0 1 0-1.41zm10.91 10.91a1 1 0 0 1 1.41 0h0a1 1 0 1 1-1.41 1.41h0a1 1 0 0 1 0-1.41zM6.34 17.66a1 1 0 0 1 1.41 1.41h0a1 1 0 1 1-1.41-1.41zm10.91-10.91a1 1 0 0 1 1.41 1.41h0a1 1 0 1 1-1.41-1.41zM12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8z"/>
-  </svg>`;
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 4.5a1 1 0 0 1 1-1h0a1 1 0 1 1 0 2h0a1 1 0 0 1-1-1zm0 14a1 1 0 0 1 1-1h0a1 1 0 1 1 0 2h0a1 1 0 0 1-1-1zM4.5 13a1 1 0 0 1 1-1h0a1 1 0 1 1 0 2h0a1 1 0 0 1-1-1zm14-1a1 1 0 1 1 0 2h0a1 1 0 1 1 0-2zM6.34 6.34a1 1 0 0 1 1.41 0h0a1 1 0 1 1-1.41 1.41h0a1 1 0 0 1 0-1.41zm10.91 10.91a1 1 0 0 1 1.41 0h0a1 1 0 1 1-1.41 1.41h0a1 1 0 0 1 0-1.41zM6.34 17.66a1 1 0 0 1 1.41 1.41h0a1 1 0 1 1-1.41-1.41zm10.91-10.91a1 1 0 0 1 1.41 1.41h0a1 1 0 1 1-1.41-1.41zM12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8z"/>
+    </svg>`;
 
     const moonSVG = `
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-    <path d="M21 12.8A9.2 9.2 0 0 1 11.2 3
-             a7.2 7.2 0 1 0 9.8 9.8Z"
-          stroke-width="1"
-          stroke-linecap="round"
-          stroke-linejoin="round"/>
-  </svg>`;
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path d="M21 12.8A9.2 9.2 0 0 1 11.2 3
+               a7.2 7.2 0 1 0 9.8 9.8Z"
+            stroke-width="1"
+            stroke-linecap="round"
+            stroke-linejoin="round"/>
+    </svg>`;
 
     function setTheme(mode) {
         if (mode === 'light') html.classList.add('light');
@@ -352,25 +894,66 @@
 
     const filterBtns = document.querySelectorAll('.filter');
     const cards = document.querySelectorAll('.proj');
+    const filtersEl = document.querySelector('.filters');
 
-    function applyFilter(key){
+    function applyFilter(key) {
         const k = key.toLowerCase();
-        cards.forEach(c=>{
-            if (k === 'all') { c.classList.remove('hide'); return; }
+        cards.forEach(c => {
+            if (k === 'all') {
+                c.classList.remove('hide');
+                return;
+            }
             const langs = (c.dataset.lang || '').toLowerCase().split(/\s+/);
             if (langs.includes(k)) c.classList.remove('hide');
             else c.classList.add('hide');
         });
     }
-    filterBtns.forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-            filterBtns.forEach(b=>b.classList.remove('active'));
+
+    function moveIndicator(btn) {
+        if (!filtersEl || !btn) return;
+        const parentRect = filtersEl.getBoundingClientRect();
+        const btnRect = btn.getBoundingClientRect();
+
+        const left = btnRect.left - parentRect.left;
+        const width = btnRect.width;
+
+        // match ellipse to button width
+        filtersEl.style.setProperty('--seg-left', left + 'px');
+        filtersEl.style.setProperty('--seg-width', width + 'px');
+
+        // 🔴 THIS is the missing piece: set data-active so CSS can color it
+        const filterKey = btn.dataset.filter || 'all';
+        filtersEl.dataset.active = filterKey;
+    }
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+
             applyFilter(btn.dataset.filter);
-            filterBtns.forEach(b=>b.setAttribute('aria-selected', b===btn ? 'true' : 'false'));
+
+            filterBtns.forEach(b =>
+                b.setAttribute('aria-selected', b === btn ? 'true' : 'false')
+            );
+
+            moveIndicator(btn);
         });
     });
+
+    // initial state
     applyFilter('all');
+    const initialActive = document.querySelector('.filter.active') || filterBtns[0];
+    if (initialActive) {
+        moveIndicator(initialActive);
+    }
+
+    // keep it aligned on resize
+    window.addEventListener('resize', () => {
+        const active = document.querySelector('.filter.active');
+        if (active) moveIndicator(active);
+    });
 </script>
+
 </body>
 </html>
