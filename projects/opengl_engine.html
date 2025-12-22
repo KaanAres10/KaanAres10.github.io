@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PBR Engine Architecture | Kaan Altıntaş</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CONFIGURATION --- */
+        :root {
+            /* Default Dark Mode */
+            --bg: #050505;
+            --card-bg: #0a0a0a;
+            --card-border: #222;
+            --text: #e5e5e5;
+            --text-muted: #888;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.2);
+            --toc-border: #222;
+            --tech-bg: rgba(255,255,255,0.03);
+            --font-ui: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+            --sidebar-width: 240px;
+        }
+
+        /* Light Mode Overrides */
+        html.light {
+            --bg: #ffffff;
+            --card-bg: #ffffff;
+            --card-border: #e5e7eb;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --accent: #2563eb;
+            --accent-glow: rgba(37, 99, 235, 0.1);
+            --toc-border: #e2e8f0;
+            --tech-bg: #f8fafc;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font-ui);
+            line-height: 1.7;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* --- BACKGROUND FX --- */
+        .bg-noise {
+            position: fixed; inset: 0; opacity: 0.03; pointer-events: none; z-index: -1;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* --- PROGRESS BAR --- */
+        #progress-bar {
+            position: fixed; top: 0; left: 0; height: 3px; background: var(--accent);
+            width: 0%; z-index: 200; transition: width 0.1s;
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        /* --- NAV --- */
+        .top-nav {
+            position: fixed; top: 20px; left: 20px; right: 20px; z-index: 100;
+            display: flex; justify-content: space-between; max-width: 1200px; margin: 0 auto;
+            pointer-events: none; /* Let clicks pass through */
+        }
+
+        .nav-btn {
+            background: rgba(var(--bg), 0.8); backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border); color: var(--text-muted);
+            padding: 8px 16px; border-radius: 99px; text-decoration: none;
+            font-size: 0.9rem; display: flex; align-items: center; gap: 8px;
+            transition: 0.2s; font-family: var(--font-code); cursor: pointer;
+            pointer-events: auto; background-color: var(--card-bg);
+        }
+        .nav-btn:hover { color: var(--text); border-color: var(--text-muted); }
+
+        .icon-only { padding: 8px; width: 40px; height: 40px; justify-content: center; }
+
+        /* --- LAYOUT --- */
+        .layout {
+            max-width: 1200px; margin: 0 auto;
+            display: grid; grid-template-columns: var(--sidebar-width) 1fr;
+            gap: 60px; padding: 0 24px;
+        }
+
+        /* --- SIDEBAR (Table of Contents) --- */
+        .sidebar {
+            position: sticky; top: 100px; height: fit-content;
+            display: none; /* Hidden on mobile */
+        }
+        .toc-title {
+            font-family: var(--font-code); font-size: 0.75rem; color: var(--text-muted);
+            margin-bottom: 16px; letter-spacing: 0.1em;
+        }
+        .toc-list { list-style: none; border-left: 1px solid var(--toc-border); padding: 0; }
+        .toc-item a {
+            display: block; padding: 8px 0 8px 20px; color: var(--text-muted);
+            font-size: 0.9rem; text-decoration: none; transition: 0.2s;
+            border-left: 2px solid transparent; margin-left: -2px;
+        }
+        .toc-item a:hover { color: var(--text); }
+        .toc-item a.active {
+            color: var(--accent); border-left-color: var(--accent); font-weight: 500;
+        }
+
+        /* --- MAIN CONTENT --- */
+        .main-content { padding-top: 100px; padding-bottom: 100px; }
+
+        /* Header */
+        header { margin-bottom: 80px; }
+        .badge {
+            display: inline-block; padding: 4px 10px; border-radius: 4px;
+            background: rgba(59, 130, 246, 0.1); color: var(--accent);
+            font-family: var(--font-code); font-size: 0.8rem; margin-bottom: 16px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; line-height: 1.1;
+            margin-bottom: 24px; letter-spacing: -0.03em;
+        }
+        .intro { font-size: 1.2rem; color: var(--text-muted); max-width: 600px; }
+
+        /* Tech Specs Grid */
+        .tech-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px; margin: 40px 0 60px;
+        }
+        .tech-box {
+            background: var(--tech-bg); border: 1px solid var(--card-border);
+            padding: 12px; border-radius: 8px;
+        }
+        .tech-key { display: block; font-family: var(--font-code); font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; }
+        .tech-val { font-weight: 600; color: var(--text); font-size: 0.95rem; }
+
+        /* --- SECTIONS --- */
+        section { margin-bottom: 100px; scroll-margin-top: 100px; }
+
+        .section-header {
+            display: flex; align-items: baseline; gap: 16px; margin-bottom: 24px;
+            border-bottom: 1px solid var(--card-border); padding-bottom: 16px;
+        }
+        .sec-num { font-family: var(--font-code); color: var(--accent); font-size: 1rem; }
+        h2 { font-size: 1.8rem; font-weight: 700; color: var(--text); }
+
+        .text-block { color: var(--text); margin-bottom: 30px; font-size: 1.05rem; }
+        .text-block ul { padding-left: 20px; color: var(--text-muted); margin-top: 12px; }
+        .text-block li { margin-bottom: 8px; }
+
+        /* --- IMAGES & FIGURES --- */
+        figure { margin: 0 0 30px 0; }
+
+        /* General Image Wrapper */
+        .img-wrapper {
+            background: var(--bg); border-radius: 8px; overflow: hidden;
+            border: 1px solid var(--card-border); position: relative;
+            margin-bottom: 12px; /* Space between image and caption */
+        }
+
+        /* Grid for multiple images */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 60px; /* INCREASED GAP SIGNIFICANTLY */
+        }
+
+        /* --- FORCE ASPECT RATIO FOR GALLERY IMAGES --- */
+        .gallery-grid .img-wrapper {
+            aspect-ratio: 16 / 9; /* Ensures uniform shape */
+            height: 100%;
+        }
+
+        .img-wrapper img {
+            display: block; width: 100%;
+            height: 100%; /* Fill the wrapper */
+            object-fit: cover; /* Crop to fit */
+            object-position: center;
+            transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .img-wrapper:hover img { transform: scale(1.03); }
+
+        figcaption {
+            margin-top: 10px; font-family: var(--font-code); font-size: 0.8rem; color: var(--text-muted);
+            display: flex; align-items: center; gap: 8px;
+        }
+        figcaption::before { content: ">"; color: var(--accent); }
+
+        /* --- FOOTER --- */
+        .project-footer {
+            margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--card-border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .github-btn {
+            background: var(--text); color: var(--bg); padding: 12px 24px;
+            border-radius: 6px; font-weight: 600; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px; transition: 0.2s;
+        }
+        .github-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+
+        /* --- HIGHLIGHT --- */
+        .hl { color: var(--accent); font-family: var(--font-code); background: rgba(59,130,246,0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+
+        /* Mobile */
+        @media (min-width: 900px) { .sidebar { display: block; } }
+        @media (max-width: 899px) {
+            .layout { grid-template-columns: 1fr; }
+            h1 { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-noise"></div>
+<div id="progress-bar"></div>
+
+<div class="top-nav">
+    <a href="../index.html" class="nav-btn">
+        &larr; Portfolio
+    </a>
+    <button id="theme-toggle" class="nav-btn icon-only" aria-label="Toggle Theme">
+        <svg id="sun-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+        <svg id="moon-icon" style="display:none;" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+    </button>
+</div>
+
+<div class="layout">
+    <aside class="sidebar">
+        <div class="toc-title">CONTENTS</div>
+        <ul class="toc-list">
+            <li class="toc-item"><a href="#intro" class="active">Overview</a></li>
+            <li class="toc-item"><a href="#foundations">01 Foundations</a></li>
+            <li class="toc-item"><a href="#lighting">02 Lighting</a></li>
+            <li class="toc-item"><a href="#shadows">03 Shadows</a></li>
+            <li class="toc-item"><a href="#materials">04 Materials</a></li>
+            <li class="toc-item"><a href="#post">05 Post-Process</a></li>
+            <li class="toc-item"><a href="#deferred">06 Deferred</a></li>
+            <li class="toc-item"><a href="#pbr">07 PBR</a></li>
+            <li class="toc-item"><a href="#ibl">08 IBL</a></li>
+            <li class="toc-item"><a href="#instancing">09 Instancing</a></li>
+            <li class="toc-item"><a href="#debug">10 Debugging</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+
+        <header id="intro">
+            <div class="badge">SYSTEM ARCHITECTURE</div>
+            <h1>Custom PBR Engine</h1>
+            <p class="intro">
+                A deep dive into building a physically based renderer from scratch using C++ and OpenGL.
+                Featuring deferred shading, IBL, and high-performance instancing.
+            </p>
+        </header>
+
+        <section id="foundations">
+            <div class="section-header">
+                <span class="sec-num">01</span>
+                <h2>Foundations</h2>
+            </div>
+            <div class="text-block">
+                <p>Like many graphics engines, this project began with a single triangle. The goal was to build robust abstractions early to support complex features later.</p>
+                <ul>
+                    <li><span class="hl">Shader System:</span> Hot-reloading support for rapid GLSL iteration.</li>
+                    <li><span class="hl">Asset Pipeline:</span> Integrated Assimp for loading complex OBJ/GLTF models.</li>
+                    <li><span class="hl">State Management:</span> Encapsulated depth, stencil, and blend states to prevent leaking OpenGL state.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="lighting">
+            <div class="section-header">
+                <span class="sec-num">02</span>
+                <h2>Lighting & Shading</h2>
+            </div>
+            <div class="text-block">
+                <p>Started with standard Blinn-Phong shading to get visuals on screen. Implemented attenuation for Point and Spot lights.</p>
+            </div>
+            <figure>
+                <div class="img-wrapper">
+                    <img src="https://media.githubusercontent.com/media/KaanAres10/OpenGL-Engine/web/assets/Lighting.png" loading="lazy" alt="Phong Lighting" onerror="this.style.display='none'">
+                </div>
+                <figcaption>Early test of multi-light attenuation.</figcaption>
+            </figure>
+        </section>
+
+        <section id="shadows">
+            <div class="section-header">
+                <span class="sec-num">03</span>
+                <h2>Shadow Mapping</h2>
+            </div>
+            <div class="text-block">
+                <p>Lighting without occlusion lacks depth. I implemented two distinct shadow techniques:</p>
+                <ol>
+                    <li><strong>Directional:</strong> Orthographic projection mapping.</li>
+                    <li><strong>Point Lights:</strong> Omnidirectional shadow mapping using geometry shaders and depth cubemaps.</li>
+                </ol>
+            </div>
+            <div class="gallery-grid">
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://media.githubusercontent.com/media/KaanAres10/OpenGL-Engine/web/assets/RenderDoc_Shadpw.png" loading="lazy" alt="RenderDoc Shadow" onerror="this.style.display='none'">
+                    </div>
+                    <figcaption>RenderDoc capture of shadow depth attachment.</figcaption>
+                </figure>
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://media.githubusercontent.com/media/KaanAres10/OpenGL-Engine/web/assets/RenderDoc_PointLigthShadow.png" loading="lazy" alt="Point Shadow" onerror="this.style.display='none'">
+                    </div>
+                    <figcaption>Omnidirectional depth cubemap visualization.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <section id="materials">
+            <div class="section-header">
+                <span class="sec-num">04</span>
+                <h2>Advanced Materials</h2>
+            </div>
+            <div class="text-block">
+                <p>To break the flat look of polygons, I implemented <span class="hl">Normal Mapping</span> for surface detail and <span class="hl">Parallax Occlusion Mapping</span> (POM) to simulate depth by raymarching height maps in the fragment shader.</p>
+            </div>
+            <div class="gallery-grid">
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://media.githubusercontent.com/media/KaanAres10/OpenGL-Engine/web/assets/Screenshot%202025-09-20%20230928.png" loading="lazy" alt="Normal Mapping" onerror="this.style.display='none'">
+                    </div>
+                    <figcaption>Surface detail via Normal Mapping.</figcaption>
+                </figure>
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://media.githubusercontent.com/media/KaanAres10/OpenGL-Engine/web/assets/Parallax.png" loading="lazy" alt="Parallax" onerror="this.style.display='none'">
+                    </div>
+                    <figcaption>Parallax Occlusion creating fake depth.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <section id="post">
+            <div class="section-header">
+                <span class="sec-num">05</span>
+                <h2>Post-Processing</h2>
+            </div>
+            <div class="text-block">
+                <p>The post-processing stack includes an HDR Framebuffer, Tone Mapping (Reinhard/ACES), and a multi-pass Gaussian Blur for the <span class="hl">Bloom</span> effect.</p>
+            </div>
+            <div class="gallery-grid">
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://media.githubusercontent.com/media/KaanAres10/OpenGL-Engine/web/assets/Bloom.png" loading="lazy" alt="Bloom" onerror="this.style.display='none'">
+                    </div>
+                    <figcaption>Bloom applied to emissive surfaces in Sponza.</figcaption>
+                </figure>
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://media.githubusercontent.com/media/KaanAres10/OpenGL-Engine/web/assets/High_Exposure.png" loading="lazy" alt="High Exposure" onerror="this.style.display='none'">
+                    </div>
+                    <figcaption>High exposure tone mapping test.</figcaption>
+                </figure>
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://media.githubusercontent.com/media/KaanAres10/OpenGL-Engine/web/assets/Screenshot%202025-09-20%20225329.png" loading="lazy" alt="Pixelation" onerror="this.style.display='none'">
+                    </div>
+                    <figcaption>Pixelation post-process shader.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <section id="deferred">
+            <div class="section-header">
+                <span class="sec-num">06</span>
+                <h2>Deferred Shading & SSAO</h2>
+            </div>
+            <div class="text-block">
+                <p>Transitioned the renderer architecture from Forward to <span class="hl">Deferred</span>. This involved creating a G-Buffer to store Albedo, Position, and Normal data, decoupling geometry processing from lighting calculations.</p>
+                <p>This also enabled <strong>SSAO (Screen Space Ambient Occlusion)</strong>, adding soft contact shadows to crevices.</p>
+            </div>
+
+            <div class="gallery-grid">
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://media.githubusercontent.com/media/KaanAres10/OpenGL-Engine/web/assets/Deferred.png" loading="lazy" alt="G-Buffer" onerror="this.style.display='none'">
+                    </div>
+                    <figcaption>G-Buffer Visualization (Albedo, Normal, Position).</figcaption>
+                </figure>
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://media.githubusercontent.com/media/KaanAres10/OpenGL-Engine/web/assets/ssao.png" loading="lazy" alt="SSAO" onerror="this.style.display='none'">
+                    </div>
+                    <figcaption>SSAO Pass output.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <section id="pbr">
+            <div class="section-header">
+                <span class="sec-num">07</span>
+                <h2>Physically Based Rendering</h2>
+            </div>
+            <div class="text-block">
+                <p>Implemented the Cook-Torrance BRDF. The engine now properly conserves energy and handles interactions between light and metallic/rough surfaces accurately.</p>
+            </div>
+            <figure>
+                <div class="img-wrapper">
+                    <img src="https://media.githubusercontent.com/media/KaanAres10/OpenGL-Engine/web/assets/rust.png" loading="lazy" alt="PBR Rust" onerror="this.style.display='none'">
+                </div>
+                <figcaption>Rusted Iron PBR Material.</figcaption>
+            </figure>
+        </section>
+
+        <section id="ibl">
+            <div class="section-header">
+                <span class="sec-num">08</span>
+                <h2>Image Based Lighting</h2>
+            </div>
+            <div class="text-block">
+                <p>To ground objects in their environment, I added IBL. This pipeline converts HDR equirectangular images into Cubemaps, then convolutes them to generate <span class="hl">Irradiance</span> and <span class="hl">Prefilter</span> maps.</p>
+            </div>
+            <figure>
+                <div class="img-wrapper">
+                    <img src="https://media.githubusercontent.com/media/KaanAres10/OpenGL-Engine/web/assets/ibl.png" loading="lazy" alt="IBL" onerror="this.style.display='none'">
+                </div>
+                <figcaption>Objects reflecting the HDR skybox.</figcaption>
+            </figure>
+        </section>
+
+        <section id="instancing">
+            <div class="section-header">
+                <span class="sec-num">09</span>
+                <h2>GPU Instancing</h2>
+            </div>
+            <div class="text-block">
+                <p>Optimized for scenes with repeating geometry (foliage). By using <code>glDrawElementsInstanced</code>, the engine can render 100,000+ objects with minimal CPU overhead.</p>
+            </div>
+            <figure>
+                <div class="img-wrapper">
+                    <img src="https://media.githubusercontent.com/media/KaanAres10/OpenGL-Engine/web/assets/instancing.png" loading="lazy" alt="Instancing" onerror="this.style.display='none'">
+                </div>
+                <figcaption>100k Instance stress test.</figcaption>
+            </figure>
+        </section>
+
+        <section id="debug">
+            <div class="section-header">
+                <span class="sec-num">10</span>
+                <h2>Debugging Tools</h2>
+            </div>
+            <div class="text-block">
+                <p>Integrated ImGui for real-time shader uniform manipulation and visualizers for normals and shadow maps to diagnose artifacts.</p>
+            </div>
+            <div class="gallery-grid">
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://media.githubusercontent.com/media/KaanAres10/OpenGL-Engine/web/assets/Normal.png" loading="lazy" alt="Debug Normals" onerror="this.style.display='none'">
+                    </div>
+                    <figcaption>Vertex Normal Debug Visualizer.</figcaption>
+                </figure>
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://media.githubusercontent.com/media/KaanAres10/OpenGL-Engine/web/assets/Screenshot%202025-08-04%20170230.png" loading="lazy" alt="Shadow Bias" onerror="this.style.display='none'">
+                    </div>
+                    <figcaption>Shadow Map Aliasing analysis.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <div class="project-footer">
+            <div>
+                <h3 style="margin-bottom: 4px;">Interested in the code?</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Check out the source on GitHub.</p>
+            </div>
+            <a href="https://github.com/KaanAres10/OpenGL-Engine" target="_blank" class="github-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                View Repository
+            </a>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    // --- 1. DARK MODE LOGIC ---
+    const toggleBtn = document.getElementById('theme-toggle');
+    const sunIcon = document.getElementById('sun-icon');
+    const moonIcon = document.getElementById('moon-icon');
+    const html = document.documentElement;
+
+    // Check local storage or system preference
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    function updateIcons(isDark) {
+        if (isDark) {
+            sunIcon.style.display = 'block';
+            moonIcon.style.display = 'none';
+        } else {
+            sunIcon.style.display = 'none';
+            moonIcon.style.display = 'block';
+        }
+    }
+
+    // Apply theme on load
+    if (savedTheme === 'light') {
+        html.classList.add('light');
+        html.classList.remove('dark');
+        updateIcons(false);
+    } else {
+        html.classList.add('dark');
+        html.classList.remove('light');
+        updateIcons(true);
+    }
+
+    toggleBtn.addEventListener('click', () => {
+        if (html.classList.contains('dark')) {
+            html.classList.remove('dark');
+            html.classList.add('light');
+            localStorage.setItem('theme', 'light');
+            updateIcons(false);
+        } else {
+            html.classList.remove('light');
+            html.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+            updateIcons(true);
+        }
+    });
+
+    // --- 2. SCROLL PROGRESS BAR ---
+    const bar = document.getElementById('progress-bar');
+    window.addEventListener('scroll', () => {
+        const scrollTop = window.scrollY;
+        const docHeight = document.body.scrollHeight - window.innerHeight;
+        const scrollPercent = (scrollTop / docHeight) * 100;
+        bar.style.width = scrollPercent + '%';
+    });
+
+    // --- 3. ACTIVE TABLE OF CONTENTS ---
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const id = entry.target.getAttribute('id');
+            const link = document.querySelector(`.toc-item a[href="#${id}"]`);
+            if (entry.isIntersecting && link) {
+                document.querySelectorAll('.toc-item a').forEach(a => a.classList.remove('active'));
+                link.classList.add('active');
+            }
+        });
+    }, { rootMargin: '-10% 0px -50% 0px' });
+
+    document.querySelectorAll('section, header').forEach(section => {
+        observer.observe(section);
+    });
+</script>
+</body>
+</html>

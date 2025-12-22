@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ray Tracing Engine | Kaan Altıntaş</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CONFIGURATION --- */
+        :root {
+            --bg: #050505;
+            --card-bg: #0a0a0a;
+            --card-border: #222;
+            --text: #e5e5e5;
+            --text-muted: #888;
+            --accent: #f59e0b; /* Amber/Orange for Ray Tracing (Light paths) */
+            --accent-glow: rgba(245, 158, 11, 0.2);
+            --toc-border: #222;
+            --tech-bg: rgba(255,255,255,0.03);
+            --font-ui: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+            --sidebar-width: 240px;
+        }
+
+        /* Light Mode Overrides */
+        html.light {
+            --bg: #ffffff;
+            --card-bg: #ffffff;
+            --card-border: #e5e7eb;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --accent: #d97706;
+            --accent-glow: rgba(217, 119, 6, 0.1);
+            --toc-border: #e2e8f0;
+            --tech-bg: #f8fafc;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            background-color: var(--bg); color: var(--text); font-family: var(--font-ui);
+            line-height: 1.7; overflow-x: hidden; transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* --- FX --- */
+        .bg-noise {
+            position: fixed; inset: 0; opacity: 0.03; pointer-events: none; z-index: -1;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        #progress-bar {
+            position: fixed; top: 0; left: 0; height: 3px; background: var(--accent);
+            width: 0%; z-index: 200; transition: width 0.1s; box-shadow: 0 0 10px var(--accent);
+        }
+
+        /* --- NAV --- */
+        .top-nav {
+            position: fixed; top: 20px; left: 20px; right: 20px; z-index: 100;
+            display: flex; justify-content: space-between; max-width: 1200px; margin: 0 auto;
+            pointer-events: none;
+        }
+        .nav-btn {
+            background: rgba(var(--bg), 0.8); backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border); color: var(--text-muted);
+            padding: 8px 16px; border-radius: 99px; text-decoration: none;
+            font-size: 0.9rem; display: flex; align-items: center; gap: 8px;
+            transition: 0.2s; font-family: var(--font-code); cursor: pointer;
+            pointer-events: auto; background-color: var(--card-bg);
+        }
+        .nav-btn:hover { color: var(--text); border-color: var(--text-muted); }
+        .icon-only { padding: 8px; width: 40px; height: 40px; justify-content: center; }
+
+        /* --- LAYOUT --- */
+        .layout {
+            max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: var(--sidebar-width) 1fr;
+            gap: 60px; padding: 0 24px;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar { position: sticky; top: 100px; height: fit-content; display: none; }
+        .toc-title {
+            font-family: var(--font-code); font-size: 0.75rem; color: var(--text-muted);
+            margin-bottom: 16px; letter-spacing: 0.1em;
+        }
+        .toc-list { list-style: none; border-left: 1px solid var(--toc-border); padding: 0; }
+        .toc-item a {
+            display: block; padding: 8px 0 8px 20px; color: var(--text-muted);
+            font-size: 0.9rem; text-decoration: none; transition: 0.2s;
+            border-left: 2px solid transparent; margin-left: -2px;
+        }
+        .toc-item a:hover { color: var(--text); }
+        .toc-item a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 500; }
+
+        /* --- CONTENT --- */
+        .main-content { padding-top: 100px; padding-bottom: 100px; }
+        header { margin-bottom: 80px; }
+        .badge {
+            display: inline-block; padding: 4px 10px; border-radius: 4px;
+            background: rgba(245, 158, 11, 0.1); color: var(--accent);
+            font-family: var(--font-code); font-size: 0.8rem; margin-bottom: 16px;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        h1 { font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; line-height: 1.1; margin-bottom: 24px; letter-spacing: -0.03em; }
+        .intro { font-size: 1.2rem; color: var(--text); max-width: 600px; opacity: 0.9; }
+
+        .tech-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px; margin: 40px 0 60px;
+        }
+        .tech-box { background: var(--tech-bg); border: 1px solid var(--card-border); padding: 12px; border-radius: 8px; }
+        .tech-key { display: block; font-family: var(--font-code); font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; }
+        .tech-val { font-weight: 600; color: var(--text); font-size: 0.95rem; }
+
+        section { margin-bottom: 100px; scroll-margin-top: 100px; }
+        .section-header {
+            display: flex; align-items: baseline; gap: 16px; margin-bottom: 24px;
+            border-bottom: 1px solid var(--card-border); padding-bottom: 16px;
+        }
+        .sec-num { font-family: var(--font-code); color: var(--accent); font-size: 1rem; }
+        h2 { font-size: 1.8rem; font-weight: 700; color: var(--text); }
+        .text-block { color: var(--text); margin-bottom: 30px; font-size: 1.05rem; }
+        .text-block ul { padding-left: 20px; color: var(--text); margin-top: 12px; }
+        .text-block li { margin-bottom: 8px; }
+
+        /* --- IMAGES & FIGURES --- */
+        figure { margin: 0 0 30px 0; }
+
+        /* Image Wrapper with fixed aspect ratio for consistency */
+        .img-wrapper {
+            background: var(--bg); border-radius: 8px; overflow: hidden;
+            border: 1px solid var(--card-border); position: relative; margin-bottom: 12px;
+            width: 100%;
+        }
+
+        /* Apply specific aspect ratio to grid images to force alignment */
+        .gallery-grid .img-wrapper,
+        .gallery-grid-3 .img-wrapper {
+            aspect-ratio: 16 / 9; /* Standard widescreen shape */
+            height: 100%;
+        }
+
+        .img-wrapper img {
+            display: block; width: 100%; height: 100%;
+            object-fit: cover; /* Crops image to fit the box without stretching */
+            object-position: center;
+            transition: transform 0.5s ease;
+        }
+        .img-wrapper:hover img { transform: scale(1.03); }
+
+        figcaption {
+            margin-top: 10px; font-family: var(--font-code); font-size: 0.8rem; color: var(--text-muted);
+            display: flex; align-items: center; gap: 8px;
+        }
+        figcaption::before { content: ">"; color: var(--accent); }
+
+        /* Image Grids */
+        .gallery-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 60px;
+        }
+        .gallery-grid-3 {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px;
+        }
+
+        /* Footer */
+        .project-footer {
+            margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--card-border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .github-btn {
+            background: var(--text); color: var(--bg); padding: 12px 24px;
+            border-radius: 6px; font-weight: 600; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px; transition: 0.2s;
+        }
+        .github-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+
+        .hl { color: var(--accent); font-family: var(--font-code); background: rgba(245, 158, 11, 0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+
+        /* Animations */
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeUp 0.6s ease-out forwards; opacity: 0; }
+        .d-1 { animation-delay: 0.1s; } .d-2 { animation-delay: 0.2s; }
+
+        @media (min-width: 900px) { .sidebar { display: block; } }
+        @media (max-width: 899px) { .layout { grid-template-columns: 1fr; } h1 { font-size: 2.5rem; } }
+    </style>
+</head>
+<body>
+
+<div class="bg-noise"></div>
+<div id="progress-bar"></div>
+
+<div class="top-nav">
+    <a href="../index.html" class="nav-btn">
+        &larr; Portfolio
+    </a>
+    <button id="theme-toggle" class="nav-btn icon-only" aria-label="Toggle Theme">
+        <svg id="sun-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+        <svg id="moon-icon" style="display:none;" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+    </button>
+</div>
+
+<div class="layout">
+    <aside class="sidebar">
+        <div class="toc-title">CONTENTS</div>
+        <ul class="toc-list">
+            <li class="toc-item"><a href="#intro" class="active">Overview</a></li>
+            <li class="toc-item"><a href="#features">01 Features</a></li>
+            <li class="toc-item"><a href="#shading">02 Shading Models</a></li>
+            <li class="toc-item"><a href="#lights">03 Lights & Shadows</a></li>
+            <li class="toc-item"><a href="#area">04 Area Lights</a></li>
+            <li class="toc-item"><a href="#bloom">05 Bloom Effect</a></li>
+            <li class="toc-item"><a href="#dof">06 Depth of Field</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+
+        <header id="intro" class="fade-in">
+            <div class="badge">Computer Graphics</div>
+            <h1>Ray Tracing Engine</h1>
+            <p class="intro">
+                A CPU-based ray tracer exploring advanced lighting models, shadows, and post-processing effects.
+                Built from scratch to understand the fundamentals of light transport.
+            </p>
+        </header>
+
+        <section id="features" class="fade-in d-1">
+            <div class="section-header">
+                <span class="sec-num">01</span>
+                <h2>Core Features</h2>
+            </div>
+            <div class="text-block">
+                <p>The engine implements a complete ray-tracing pipeline including:</p>
+                <ul>
+                    <li><span class="hl">BVH Traversal:</span> Efficient bounding volume hierarchy for fast ray-scene intersections.</li>
+                    <li><span class="hl">Lighting Models:</span> Support for Point, Segment, and Parallelogram area lights.</li>
+                    <li><span class="hl">Post-Processing:</span> Bloom and Depth of Field effects applied after rendering.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="shading" class="fade-in d-2">
+            <div class="section-header">
+                <span class="sec-num">02</span>
+                <h2>Shading Models</h2>
+            </div>
+            <div class="text-block">
+                <p>Implemented and compared multiple shading models including Phong, Blinn-Phong, and a custom Linear Gradient shader. The comparison model below highlights the differences in specular highlights.</p>
+                <ul>
+                    <li><span style="color: #ef4444;">Red:</span> Phong dominant (sharp, intense highlights).</li>
+                    <li><span style="color: #06b6d4;">Cyan:</span> Blinn-Phong dominant (broader, softer highlights).</li>
+                    <li><span style="color: #888;">Gray:</span> Similar contribution.</li>
+                </ul>
+            </div>
+
+            <div class="gallery-grid">
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://raw.githubusercontent.com/KaanAres10/Computer-Graphics-Final-Project/web/doc/Comparison-Model.png" loading="lazy" alt="Comparison Model">
+                    </div>
+                    <figcaption>Shading Comparison (Front View)</figcaption>
+                </figure>
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://raw.githubusercontent.com/KaanAres10/Computer-Graphics-Final-Project/web/doc/Comparison-Model-(Different%20View).png" loading="lazy" alt="Comparison Model Side">
+                    </div>
+                    <figcaption>Shading Comparison (Side View)</figcaption>
+                </figure>
+            </div>
+
+            <figure style="margin-top: 40px; max-width: 350px; margin-inline: auto;">
+                <div class="img-wrapper">
+                    <img src="https://raw.githubusercontent.com/KaanAres10/Computer-Graphics-Final-Project/web/doc/Linear_Gradient_Model.png" loading="lazy" alt="Linear Gradient">
+                </div>
+                <figcaption>Linear Gradient Interpolation Test</figcaption>
+            </figure>
+        </section>
+
+        <section id="lights" class="fade-in">
+            <div class="section-header">
+                <span class="sec-num">03</span>
+                <h2>Lights & Shadows</h2>
+            </div>
+            <div class="text-block">
+                <p>Visibility is calculated using both binary and transparency-based methods. Debug rays visualize the path from intersection points to light sources.</p>
+            </div>
+
+            <div class="gallery-grid-3">
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://raw.githubusercontent.com/KaanAres10/Computer-Graphics-Final-Project/web/doc/Visibility(True).png" loading="lazy" alt="Visibility True">
+                    </div>
+                    <figcaption>Visibility True (Unobstructed)</figcaption>
+                </figure>
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://raw.githubusercontent.com/KaanAres10/Computer-Graphics-Final-Project/web/doc/Visibility(False).png" loading="lazy" alt="Visibility False">
+                    </div>
+                    <figcaption>Visibility False (Blocked)</figcaption>
+                </figure>
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://raw.githubusercontent.com/KaanAres10/Computer-Graphics-Final-Project/web/doc/Transparency_Visibility_Ray.png" loading="lazy" alt="Transparency">
+                    </div>
+                    <figcaption>Transparency Visibility</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <section id="area" class="fade-in">
+            <div class="section-header">
+                <span class="sec-num">04</span>
+                <h2>Area Lights</h2>
+            </div>
+            <div class="text-block">
+                <p>Implemented segment and parallelogram lights to create realistic soft shadows. These require multiple samples per pixel to converge.</p>
+            </div>
+
+            <div class="gallery-grid">
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://raw.githubusercontent.com/KaanAres10/Computer-Graphics-Final-Project/web/doc/ParallelogramLight.png" loading="lazy" alt="Debug View">
+                    </div>
+                    <figcaption>Debug View: Occluded rays shown in red</figcaption>
+                </figure>
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://raw.githubusercontent.com/KaanAres10/Computer-Graphics-Final-Project/web/doc/image30.jpg" loading="lazy" alt="Rendered">
+                    </div>
+                    <figcaption>Final Render: Soft shadows from area light</figcaption>
+                </figure>
+            </div>
+
+            <figure style="margin-top: 40px;">
+                <div class="img-wrapper">
+                    <img src="https://raw.githubusercontent.com/KaanAres10/Computer-Graphics-Final-Project/web/doc/SegmentLight_Uniform.png" loading="lazy" alt="Segment Light">
+                </div>
+                <figcaption>Uniform sampling along a segment light source.</figcaption>
+            </figure>
+        </section>
+
+        <section id="bloom" class="fade-in">
+            <div class="section-header">
+                <span class="sec-num">05</span>
+                <h2>Bloom Effect</h2>
+            </div>
+            <div class="text-block">
+                <p>The bloom pipeline extracts bright pixels using a threshold, blurs them using a separable Gaussian filter with binomial coefficients, and adds them back to the scene.</p>
+            </div>
+
+            <div class="gallery-grid-3">
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://raw.githubusercontent.com/KaanAres10/Computer-Graphics-Final-Project/web/doc/Bloom.jpg" loading="lazy" alt="Final Bloom">
+                    </div>
+                    <figcaption>Final Image with Sigmoid Bloom</figcaption>
+                </figure>
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://raw.githubusercontent.com/KaanAres10/Computer-Graphics-Final-Project/web/doc/Bloom_Only.jpg" loading="lazy" alt="Bloom Only">
+                    </div>
+                    <figcaption>Extracted Bloom Layer</figcaption>
+                </figure>
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://raw.githubusercontent.com/KaanAres10/Computer-Graphics-Final-Project/web/doc/Bloom_Only_GrayScale.jpg" loading="lazy" alt="Grayscale">
+                    </div>
+                    <figcaption>Intensity Distribution</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <section id="dof" class="fade-in">
+            <div class="section-header">
+                <span class="sec-num">06</span>
+                <h2>Depth of Field</h2>
+            </div>
+            <div class="text-block">
+                <p>Simulates a thin lens camera. For each pixel, multiple rays are generated by sampling random points on a lens disk, directing them towards a focal point on the image plane.</p>
+            </div>
+
+            <div class="gallery-grid">
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://raw.githubusercontent.com/KaanAres10/Computer-Graphics-Final-Project/web/doc/Focal_Plane.png" loading="lazy" alt="Debug Plane">
+                    </div>
+                    <figcaption>Focal Plane Visualization (Green)</figcaption>
+                </figure>
+                <figure>
+                    <div class="img-wrapper">
+                        <img src="https://raw.githubusercontent.com/KaanAres10/Computer-Graphics-Final-Project/web/doc/Focused_Green.png" loading="lazy" alt="Focused Green">
+                    </div>
+                    <figcaption>Focus on Green Box (Red blurred)</figcaption>
+                </figure>
+            </div>
+
+            <figure style="margin-top: 40px;">
+                <div class="img-wrapper">
+                    <img src="https://raw.githubusercontent.com/KaanAres10/Computer-Graphics-Final-Project/web/doc/Focal_Point.png" loading="lazy" alt="Focal Point">
+                </div>
+                <figcaption>Debug view: Rays converging at the focal point.</figcaption>
+            </figure>
+        </section>
+
+        <div class="project-footer">
+            <div>
+                <h3 style="margin-bottom: 4px;">Interested in the code?</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Check out the source on GitHub.</p>
+            </div>
+            <a href="https://github.com/KaanAres10/Computer-Graphics-Final-Project" target="_blank" class="github-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                View Repository
+            </a>
+        </div>
+
+    </main>
+</div>
+
+<footer style="text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.9rem;">
+    &copy; <span id="year"></span> Kaan Altıntaş
+</footer>
+
+<script>
+    // --- DARK MODE ---
+    const toggleBtn = document.getElementById('theme-toggle');
+    const sunIcon = document.getElementById('sun-icon');
+    const moonIcon = document.getElementById('moon-icon');
+    const html = document.documentElement;
+    const savedTheme = localStorage.getItem('theme');
+
+    function updateIcons(isDark) {
+        if (isDark) { sunIcon.style.display = 'block'; moonIcon.style.display = 'none'; }
+        else { sunIcon.style.display = 'none'; moonIcon.style.display = 'block'; }
+    }
+
+    if (savedTheme === 'light') { html.classList.add('light'); html.classList.remove('dark'); updateIcons(false); }
+    else { html.classList.add('dark'); html.classList.remove('light'); updateIcons(true); }
+
+    toggleBtn.addEventListener('click', () => {
+        if (html.classList.contains('dark')) {
+            html.classList.remove('dark'); html.classList.add('light'); localStorage.setItem('theme', 'light'); updateIcons(false);
+        } else {
+            html.classList.remove('light'); html.classList.add('dark'); localStorage.setItem('theme', 'dark'); updateIcons(true);
+        }
+    });
+
+    // --- SCROLL PROGRESS ---
+    const bar = document.getElementById('progress-bar');
+    window.addEventListener('scroll', () => {
+        const scrollTop = window.scrollY;
+        const docHeight = document.body.scrollHeight - window.innerHeight;
+        const scrollPercent = (scrollTop / docHeight) * 100;
+        bar.style.width = scrollPercent + '%';
+    });
+
+    // --- TOC OBSERVER ---
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const id = entry.target.getAttribute('id');
+            const link = document.querySelector(`.toc-item a[href="#${id}"]`);
+            if (entry.isIntersecting && link) {
+                document.querySelectorAll('.toc-item a').forEach(a => a.classList.remove('active'));
+                link.classList.add('active');
+            }
+        });
+    }, { rootMargin: '-10% 0px -50% 0px' });
+
+    document.querySelectorAll('section, header').forEach(section => { observer.observe(section); });
+    document.getElementById('year').innerText = new Date().getFullYear();
+</script>
+</body>
+</html>

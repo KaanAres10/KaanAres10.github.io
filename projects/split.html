@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splitty | Expense Management</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CONFIGURATION --- */
+        :root {
+            --bg: #050505;
+            --card-bg: #0a0a0a;
+            --card-border: #222;
+            --text: #e5e5e5;
+            --text-muted: #888;
+            --accent: #14b8a6; /* Teal/Cyan for Productivity Suite */
+            --accent-glow: rgba(20, 184, 166, 0.2);
+            --toc-border: #222;
+            --tech-bg: rgba(255,255,255,0.03);
+            --font-ui: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+            --sidebar-width: 240px;
+        }
+
+        /* Light Mode Overrides */
+        html.light {
+            --bg: #ffffff;
+            --card-bg: #ffffff;
+            --card-border: #e5e7eb;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --accent: #0d9488;
+            --accent-glow: rgba(13, 148, 136, 0.1);
+            --toc-border: #e2e8f0;
+            --tech-bg: #f8fafc;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            background-color: var(--bg); color: var(--text); font-family: var(--font-ui);
+            line-height: 1.7; overflow-x: hidden; transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* --- FX --- */
+        .bg-noise {
+            position: fixed; inset: 0; opacity: 0.03; pointer-events: none; z-index: -1;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        #progress-bar {
+            position: fixed; top: 0; left: 0; height: 3px; background: var(--accent);
+            width: 0%; z-index: 200; transition: width 0.1s; box-shadow: 0 0 10px var(--accent);
+        }
+
+        /* --- NAV --- */
+        .top-nav {
+            position: fixed; top: 20px; left: 20px; right: 20px; z-index: 100;
+            display: flex; justify-content: space-between; max-width: 1200px; margin: 0 auto;
+            pointer-events: none;
+        }
+        .nav-btn {
+            background: rgba(var(--bg), 0.8); backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border); color: var(--text-muted);
+            padding: 8px 16px; border-radius: 99px; text-decoration: none;
+            font-size: 0.9rem; display: flex; align-items: center; gap: 8px;
+            transition: 0.2s; font-family: var(--font-code); cursor: pointer;
+            pointer-events: auto; background-color: var(--card-bg);
+        }
+        .nav-btn:hover { color: var(--text); border-color: var(--text-muted); }
+        .icon-only { padding: 8px; width: 40px; height: 40px; justify-content: center; }
+
+        /* --- LAYOUT --- */
+        .layout {
+            max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: var(--sidebar-width) 1fr;
+            gap: 60px; padding: 0 24px;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar { position: sticky; top: 100px; height: fit-content; display: none; }
+        .toc-title {
+            font-family: var(--font-code); font-size: 0.75rem; color: var(--text-muted);
+            margin-bottom: 16px; letter-spacing: 0.1em;
+        }
+        .toc-list { list-style: none; border-left: 1px solid var(--toc-border); padding: 0; }
+        .toc-item a {
+            display: block; padding: 8px 0 8px 20px; color: var(--text-muted);
+            font-size: 0.9rem; text-decoration: none; transition: 0.2s;
+            border-left: 2px solid transparent; margin-left: -2px;
+        }
+        .toc-item a:hover { color: var(--text); }
+        .toc-item a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 500; }
+
+        /* --- CONTENT --- */
+        .main-content { padding-top: 100px; padding-bottom: 100px; }
+        header { margin-bottom: 80px; }
+        .badge {
+            display: inline-block; padding: 4px 10px; border-radius: 4px;
+            background: rgba(20, 184, 166, 0.1); color: var(--accent);
+            font-family: var(--font-code); font-size: 0.8rem; margin-bottom: 16px;
+            border: 1px solid rgba(20, 184, 166, 0.2);
+        }
+        h1 { font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; line-height: 1.1; margin-bottom: 24px; letter-spacing: -0.03em; }
+        .intro { font-size: 1.2rem; color: var(--text); max-width: 600px; opacity: 0.9; }
+
+        .tech-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px; margin: 40px 0 60px;
+        }
+        .tech-box { background: var(--tech-bg); border: 1px solid var(--card-border); padding: 12px; border-radius: 8px; }
+        .tech-key { display: block; font-family: var(--font-code); font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; }
+        .tech-val { font-weight: 600; color: var(--text); font-size: 0.95rem; }
+
+        section { margin-bottom: 100px; scroll-margin-top: 100px; }
+        .section-header {
+            display: flex; align-items: baseline; gap: 16px; margin-bottom: 24px;
+            border-bottom: 1px solid var(--card-border); padding-bottom: 16px;
+        }
+        .sec-num { font-family: var(--font-code); color: var(--accent); font-size: 1rem; }
+        h2 { font-size: 1.8rem; font-weight: 700; color: var(--text); }
+        .text-block { color: var(--text); margin-bottom: 30px; font-size: 1.05rem; }
+        .text-block ul { padding-left: 20px; color: var(--text); margin-top: 12px; }
+        .text-block li { margin-bottom: 8px; }
+
+        /* --- CARDS & KEYBOARD --- */
+        .stage-card {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 12px; margin-bottom: 24px; position: relative; overflow: hidden;
+            display: flex; flex-direction: column; --mouse-x: 0px; --mouse-y: 0px;
+        }
+        .stage-card::before {
+            content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity 0.5s; pointer-events: none;
+            background: radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), rgba(255, 255, 255, 0.04), transparent 40%); z-index: 1;
+        }
+        .stage-card::after {
+            content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity 0.5s; pointer-events: none;
+            background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), var(--accent-glow), transparent 40%); z-index: 0; border-radius: inherit;
+        }
+        .stage-card:hover::before, .stage-card:hover::after { opacity: 1; }
+
+        .stage-inner { background: var(--card-bg); margin: 1px; border-radius: 11px; z-index: 2; padding: 24px; }
+        .stage-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+
+        .kbd-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px;
+        }
+        .kbd-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid var(--card-border);
+        }
+        .kbd {
+            font-family: var(--font-code); font-size: 0.85rem; padding: 2px 6px;
+            border-radius: 4px; background: var(--tech-bg); border: 1px solid var(--card-border);
+            color: var(--accent); font-weight: 600;
+        }
+
+        /* --- CODE BLOCKS (TERMINAL STYLE) --- */
+        .code-block {
+            background: #111; border: 1px solid var(--card-border); border-radius: 8px;
+            padding: 20px; overflow-x: auto; font-family: var(--font-code); font-size: 0.85rem;
+            color: #d4d4d4; margin-top: 20px;
+        }
+        html.light .code-block { background: #1e293b; color: #e2e8f0; }
+        .code-comment { color: #6a9955; }
+        .code-cmd { color: var(--accent); font-weight: 700; }
+
+        /* Footer */
+        .project-footer {
+            margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--card-border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .github-btn {
+            background: var(--text); color: var(--bg); padding: 12px 24px;
+            border-radius: 6px; font-weight: 600; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px; transition: 0.2s;
+        }
+        .github-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+
+        .hl { color: var(--accent); font-family: var(--font-code); background: rgba(20, 184, 166, 0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+
+        /* Animations */
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeUp 0.6s ease-out forwards; opacity: 0; }
+        .d-1 { animation-delay: 0.1s; } .d-2 { animation-delay: 0.2s; }
+
+        @media (min-width: 900px) { .sidebar { display: block; } }
+        @media (max-width: 899px) { .layout { grid-template-columns: 1fr; } h1 { font-size: 2.5rem; } }
+    </style>
+</head>
+<body>
+
+<div class="bg-noise"></div>
+<div id="progress-bar"></div>
+
+<div class="top-nav">
+    <a href="../index.html" class="nav-btn">
+        &larr; Portfolio
+    </a>
+    <button id="theme-toggle" class="nav-btn icon-only" aria-label="Toggle Theme">
+        <svg id="sun-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+        <svg id="moon-icon" style="display:none;" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+    </button>
+</div>
+
+<div class="layout">
+    <aside class="sidebar">
+        <div class="toc-title">CONTENTS</div>
+        <ul class="toc-list">
+            <li class="toc-item"><a href="#intro" class="active">Overview</a></li>
+            <li class="toc-item"><a href="#setup">01 Setup & Config</a></li>
+            <li class="toc-item"><a href="#shortcuts">02 Shortcuts</a></li>
+            <li class="toc-item"><a href="#sync">03 Long-Polling</a></li>
+            <li class="toc-item"><a href="#visuals">04 Visualization</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+
+        <header id="intro" class="fade-in">
+            <div class="badge">JAVA / SPRING BOOT</div>
+            <h1>Splitty</h1>
+            <p class="intro">
+                A collaborative expense management application. Create events, invite participants, and log shared expenses with real-time updates via WebSockets and Long-polling.
+            </p>
+        </header>
+
+        <section id="setup" class="fade-in d-1">
+            <div class="section-header">
+                <span class="sec-num">01</span>
+                <h2>Setup & Configuration</h2>
+            </div>
+            <div class="text-block">
+                <p>The application is split into client and server modules. Use Gradle to build and run.</p>
+
+                <div class="code-block">
+                    <span class="code-comment"># 1. Build the app</span>
+                    <span class="code-cmd">./gradlew</span> build
+
+                    <span class="code-comment"># 2. Run the server</span>
+                    <span class="code-cmd">./gradlew</span> bootRun
+
+                    <span class="code-comment"># 3. Run the client (JavaFX included)</span>
+                    <span class="code-cmd">./gradlew</span> run
+                </div>
+
+                <p style="margin-top:20px;"><strong>Config Files:</strong></p>
+                <ul>
+                    <li><span class="hl">user.json</span>: Stores local user data. Delete to reset user.</li>
+                    <li><span class="hl">config.properties</span>: Contains language settings ('en', 'fr', 'nl', 'de') and last connected server IP.</li>
+                    <li><span class="hl">h2-database</span>: The local database file for the server.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="shortcuts" class="fade-in d-2">
+            <div class="section-header">
+                <span class="sec-num">02</span>
+                <h2>Keyboard Navigation</h2>
+            </div>
+            <div class="text-block">
+                <p>Splitty is designed for efficiency with full keyboard support.</p>
+            </div>
+
+            <div class="stage-card">
+                <div class="stage-inner">
+                    <div class="kbd-grid">
+                        <div class="kbd-row"><span>Navigate UI</span> <span class="kbd">ARROWS</span></div>
+                        <div class="kbd-row"><span>Select / Action</span> <span class="kbd">ENTER</span></div>
+                        <div class="kbd-row"><span>Go Back / Exit</span> <span class="kbd">ESCAPE</span></div>
+                        <div class="kbd-row"><span>Previous Page</span> <span class="kbd">BACKSPACE</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="sync" class="fade-in">
+            <div class="section-header">
+                <span class="sec-num">03</span>
+                <h2>Real-Time Sync</h2>
+            </div>
+            <div class="text-block">
+                <p>Splitty uses a hybrid approach for data synchronization:</p>
+                <ul>
+                    <li><span class="hl">Long-Polling:</span> Used for participant lists. Adding a participant on one client instantly updates the list on another client viewing the same event.</li>
+                    <li><span class="hl">WebSockets:</span> Used for high-frequency updates like Expense creation and Debt settlement. Changes appear immediately without refreshing.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="visuals" class="fade-in">
+            <div class="section-header">
+                <span class="sec-num">04</span>
+                <h2>Multi-Modal Visualization</h2>
+            </div>
+            <div class="text-block">
+                <p>The UI is designed to be accessible and informative:</p>
+                <ul>
+                    <li><span class="hl">Icons & Tooltips:</span> Elements are distinguishable by color and icon shape. Hovering reveals detailed text tooltips.</li>
+                    <li><span class="hl">Interactive Charts:</span> The Statistics page features an interactive Pie Chart. Hovering over a slice reveals the exact percentage of expenses for that tag.</li>
+                </ul>
+            </div>
+        </section>
+
+        <div class="project-footer">
+            <div>
+                <h3 style="margin-bottom: 4px;">Interested in the code?</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Check out the source on GitHub.</p>
+            </div>
+            <a href="https://github.com/KaanAres10/Splitty" target="_blank" class="github-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                View Repository
+            </a>
+        </div>
+
+    </main>
+</div>
+
+<footer style="text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.9rem;">
+    &copy; <span id="year"></span> Kaan Altıntaş
+</footer>
+
+<script>
+    // --- SPOTLIGHT EFFECT ---
+    const container = document.getElementById("cards-container");
+    const cards = document.querySelectorAll(".stage-card");
+
+    if(container) {
+        container.addEventListener("mousemove", (e) => {
+            for (const card of cards) {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty("--mouse-x", `${x}px`);
+                card.style.setProperty("--mouse-y", `${y}px`);
+            }
+        });
+    }
+
+    // --- DARK MODE ---
+    const toggleBtn = document.getElementById('theme-toggle');
+    const sunIcon = document.getElementById('sun-icon');
+    const moonIcon = document.getElementById('moon-icon');
+    const html = document.documentElement;
+    const savedTheme = localStorage.getItem('theme');
+
+    function updateIcons(isDark) {
+        if (isDark) { sunIcon.style.display = 'block'; moonIcon.style.display = 'none'; }
+        else { sunIcon.style.display = 'none'; moonIcon.style.display = 'block'; }
+    }
+
+    if (savedTheme === 'light') { html.classList.add('light'); html.classList.remove('dark'); updateIcons(false); }
+    else { html.classList.add('dark'); html.classList.remove('light'); updateIcons(true); }
+
+    toggleBtn.addEventListener('click', () => {
+        if (html.classList.contains('dark')) {
+            html.classList.remove('dark'); html.classList.add('light'); localStorage.setItem('theme', 'light'); updateIcons(false);
+        } else {
+            html.classList.remove('light'); html.classList.add('dark'); localStorage.setItem('theme', 'dark'); updateIcons(true);
+        }
+    });
+
+    // --- SCROLL PROGRESS ---
+    const bar = document.getElementById('progress-bar');
+    window.addEventListener('scroll', () => {
+        const scrollTop = window.scrollY;
+        const docHeight = document.body.scrollHeight - window.innerHeight;
+        const scrollPercent = (scrollTop / docHeight) * 100;
+        bar.style.width = scrollPercent + '%';
+    });
+
+    // --- TOC OBSERVER ---
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const id = entry.target.getAttribute('id');
+            const link = document.querySelector(`.toc-item a[href="#${id}"]`);
+            if (entry.isIntersecting && link) {
+                document.querySelectorAll('.toc-item a').forEach(a => a.classList.remove('active'));
+                link.classList.add('active');
+            }
+        });
+    }, { rootMargin: '-10% 0px -50% 0px' });
+
+    document.querySelectorAll('section, header').forEach(section => { observer.observe(section); });
+    document.getElementById('year').innerText = new Date().getFullYear();
+</script>
+</body>
+</html>
