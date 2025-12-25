@@ -1,6 +1,6 @@
 :root {
   --bg: #0b0d10;
-  --text: #e6edf3;
+  --text: #0084ff;
   --muted: #97a0ad;
   --line: #1b2129;
   --accent: #79a6ff;
@@ -8,7 +8,7 @@
 
 :root.light {
   --bg: #ffffff;
-  --text: #0b1020;
+  --text: #0052ff;
   --muted: #5e6773;
   --line: #e8edf3;
   --accent: #1c7ed6;
