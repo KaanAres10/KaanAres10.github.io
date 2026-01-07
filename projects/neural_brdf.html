@@ -3,23 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Denoising VolumetricReSTIR</title>
+    <meta name="theme-color" content="#050505">
+
+    <title>Neural BRDF</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
     <style>
-        /* --- CONFIGURATION --- */
+        /* --- CONFIGURATION (PURPLE THEME) --- */
         :root {
             --bg: #050505;
             --card-bg: #0a0a0a;
             --card-border: #222;
             --text: #e5e5e5;
             --text-muted: #888;
-            /* Cyan/Teal Accent for Research/Rendering */
-            --accent: #06b6d4;
-            --accent-glow: rgba(6, 182, 212, 0.2);
+
+            /* THEME ACCENTS: Purple */
+            --accent: #009dff;           /* Purple-500 */
+            --accent-glow: rgb(108, 203, 255);
+
             --toc-border: #222;
             --tech-bg: rgba(255,255,255,0.03);
             --font-ui: 'Inter', sans-serif;
@@ -34,8 +38,8 @@
             --card-border: #e5e7eb;
             --text: #0f172a;
             --text-muted: #64748b;
-            --accent: #0891b2;
-            --accent-glow: rgba(8, 145, 178, 0.1);
+            --accent: #009dff;
+            --accent-glow: rgb(116, 202, 255);
             --toc-border: #e2e8f0;
             --tech-bg: #f8fafc;
         }
@@ -101,9 +105,9 @@
         header { margin-bottom: 80px; }
         .badge {
             display: inline-block; padding: 4px 10px; border-radius: 4px;
-            background: rgba(6, 182, 212, 0.1); color: var(--accent);
+            background: rgba(80, 165, 252, 0.1); color: var(--accent);
             font-family: var(--font-code); font-size: 0.8rem; margin-bottom: 16px;
-            border: 1px solid rgba(6, 182, 212, 0.2);
+            border: 1px solid rgba(55, 156, 255, 0.2);
         }
         h1 { font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; line-height: 1.1; margin-bottom: 24px; letter-spacing: -0.03em; }
         .intro { font-size: 1.2rem; color: var(--text); max-width: 600px; opacity: 0.9; }
@@ -127,7 +131,6 @@
         .img-wrapper img, .img-wrapper video {
             display: block; width: 100%; height: auto; transition: transform 0.5s ease;
         }
-        /* No hover zoom for UI screenshots to keep text readable */
         .img-wrapper.zoom:hover img { transform: scale(1.03); }
 
         figcaption {
@@ -146,10 +149,32 @@
         .code-block code { color: var(--text); }
         .hl-cmd { color: var(--accent); }
 
-        /* --- GRID --- */
+        /* --- GRID & TECH --- */
         .gallery-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; margin-top: 30px;
         }
+
+        .tech-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px; margin: 30px 0;
+        }
+        .tech-box {
+            background: var(--tech-bg); padding: 20px; border-radius: 8px;
+            border: 1px solid var(--card-border);
+        }
+        .tech-box h3 {
+            font-family: var(--font-code); font-size: 0.85rem; text-transform: uppercase;
+            letter-spacing: 0.05em; color: var(--accent); margin-bottom: 12px;
+        }
+        .param-list {
+            font-family: var(--font-code); font-size: 0.85rem; color: var(--text);
+            display: flex; flex-wrap: wrap; gap: 8px;
+        }
+        .param-tag {
+            background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px;
+            border: 1px solid var(--card-border); transition: border-color 0.2s;
+        }
+        .param-tag:hover { border-color: var(--accent); }
 
         /* --- FOOTER --- */
         .project-footer {
@@ -163,7 +188,7 @@
         }
         .github-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
 
-        .hl { color: var(--accent); font-family: var(--font-code); background: rgba(6, 182, 212, 0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+        .hl { color: var(--accent); font-family: var(--font-code); background: rgba(168, 85, 247, 0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
 
         /* Animations */
         @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -194,108 +219,141 @@
         <div class="toc-title">CONTENTS</div>
         <ul class="toc-list">
             <li class="toc-item"><a href="#intro" class="active">Overview</a></li>
-            <li class="toc-item"><a href="#motivation">01 Motivation</a></li>
-            <li class="toc-item"><a href="#findings">02 Key Findings</a></li>
-            <li class="toc-item"><a href="#implementation">03 Implementation</a></li>
+            <li class="toc-item"><a href="#demo">01 Real Time Optimization</a></li>
+            <li class="toc-item"><a href="#comparison">02 Training vs Inference</a></li>
+            <li class="toc-item"><a href="#arch">03 Architecture</a></li>
+            <li class="toc-item"><a href="#requirements">04 Requirements</a></li>
         </ul>
     </aside>
 
     <main class="main-content">
 
         <header id="intro" class="fade-in">
-            <div class="badge">R&D / Graphics</div>
-            <h1>Denoising Volumetric ReSTIR</h1>
+            <div class="badge">AI / Rendering</div>
+            <h1>Neural BRDF</h1>
             <p class="intro">
-                Investigating the trade off between denoising strength and additional Volumetric ReSTIR sampling under a fixed compute budget.
+                Approximating a <strong>Disney BRDF</strong> using a small MLP running on the shaders via <strong>Slang and SlangPy</strong>.
             </p>
-            <div class="img-wrapper zoom" style="margin-bottom: 40px; margin-top: 30px;">
-                <img src="https://raw.githubusercontent.com/KaanAres10/Denoising-VolumetricReSTIR/refs/heads/main/Docs/Cover_Comparison.png" loading="lazy" alt="Comparison of Volumetric ReSTIR: Base, OIDN, OptiX, Reference">
-            </div>
+            <p style="color:var(--text); margin-top:20px;">
+                It is based on
+                <a href="https://github.com/NVIDIA-RTX/RTXNS" target="_blank" style="color: #009dff;">
+                    <strong>NVIDIA Neural Shading SDK</strong>
+                </a>
+                and adapted to
+                <strong>SlangPy</strong>.
+            </p>
         </header>
 
-        <section id="motivation" class="fade-in d-1">
+        <section id="demo" class="fade-in d-1">
             <div class="section-header">
                 <span class="sec-num">01</span>
-                <h2>Motivation</h2>
+                <h2>Video</h2>
             </div>
             <div class="text-block">
-                <p>The work builds based on the original implementation of <strong>Volumetric ReSTIR by Lin et al.(2021)</strong>. While this technique already produces low variance samples by reusing light transport paths across space and time. In practice, however, real-time volumetric rendering pipelines often rely on denoising to further suppress noise.</p>
-                <p>This raises a key research question:</p>
-                <blockquote style="border-left: 2px solid var(--accent); padding-left: 20px; color: var(--text-muted); margin: 24px 0; font-style: italic;">
-                    "Under a fixed frame-time budget, is it more effective to spend compute on stronger denoising, or to allocate that budget to improved Volumetric ReSTIR sampling?"
-                </blockquote>
-                <p>To answer this, we extended the original codebase with multiple denoising configurations and performed controlled comparisons across different scenes and camera motions.</p>
+                <p>Showing the real time optimization process.</p>
             </div>
-
-            <div class="img-wrapper" style="margin-top: 30px;">
-                <video muted loop playsinline controls preload="metadata" style="width:100%; border-radius:8px;">
-                    <source src="https://github.com/user-attachments/assets/ae49a7f1-0505-46f3-b3a3-946a05ded240" type="video/mp4">
+            <div class="img-wrapper">
+                <video muted loop playsinline controls preload="metadata" style="width:100%;">
+                    <source src="https://github.com/user-attachments/assets/54320f9c-b785-47c3-952a-9fb2f205688f" type="video/mp4">
                 </video>
             </div>
-            <figcaption>Comparison Video: Volumetric ReSTIR with different denoisers</figcaption>
+            <figcaption>Real time training video</figcaption>
         </section>
 
-        <section id="findings" class="fade-in d-2">
+        <section id="comparison" class="fade-in d-2">
             <div class="section-header">
                 <span class="sec-num">02</span>
-                <h2>Key Findings</h2>
+                <h2>Training & Inference</h2>
             </div>
+
             <div class="text-block">
+                <p style="margin-bottom: 24px;">The application features two modes:</p>
                 <ul>
-                    <li><span class="hl">Perceptual Quality:</span> Denoisers significantly reduce perceptual error, especially in complex scenes.</li>
-                    <li><span class="hl">Simple Scenes:</span> In simple volumetric scenes, Volumetric ReSTIR already produces clean samples, making aggressive denoising less beneficial.</li>
-                    <li><span class="hl">Compute Allocation:</span> Reallocating compute from denoising to sampling can recover much of the quality lost by weaker denoising.</li>
-                    <li><span class="hl">Efficiency:</span> Low quality denoising combined with improved sampling often matches and sometimes exceeds the quality of high quality denoisers.</li>
-                    <li><span class="hl">Optimization:</span> Selecting the strongest denoiser is <strong>not always optimal</strong>; best results come from balancing sample quality and denoiser strength.</li>
+                    <li><strong>Training Mode:</strong> It shows <strong>Reference / Neural / Difference</strong> side by side while optimizing the network.</li>
+                    <li><strong>Inference Mode:</strong> It loads a model and runs Neural BRDF in inference mode.</li>
                 </ul>
+            </div>
+
+            <div style="margin-bottom: 60px;">
+                <h3 style="color:var(--text); font-size:1.1rem; margin-bottom:12px;">Training Mode</h3>
+                <div class="img-wrapper zoom" style="width: 100%; aspect-ratio: auto;">
+                    <img src="https://raw.githubusercontent.com/KaanAres10/Neural-BRDF/refs/heads/main/images/Neural_BRDF_Training.png" loading="lazy" alt="Training Mode Interface showing Reference, Neural and Difference">
+                </div>
+            </div>
+
+            <div>
+                <h3 style="color:var(--text); font-size:1.1rem; margin-bottom:12px; text-align: center;">Inference Mode</h3>
+                <div class="img-wrapper zoom" style="width: 30%; min-width: 300px; aspect-ratio: auto; margin: 0 auto;">
+                    <img src="https://raw.githubusercontent.com/KaanAres10/Neural-BRDF/refs/heads/main/images/Neural_BRDF_Inference.png" loading="lazy" alt="Inference Result">
+                </div>
             </div>
         </section>
 
-        <section id="implementation" class="fade-in">
+        <section id="arch" class="fade-in">
             <div class="section-header">
                 <span class="sec-num">03</span>
-                <h2>Implementation</h2>
+                <h2>Architecture</h2>
             </div>
 
-            <div class="text-block">
-                <h3>Denoiser Integrations</h3>
-                <p>The following denoisers were integrated as render passes within the Falcor pipeline:</p>
-                <ul>
-                    <li>Intel Open Image Denoise (OIDN) – GPU</li>
-                    <li>Intel Open Image Denoise (OIDN) – CPU</li>
-                    <li>NVIDIA OptiX AI Denoiser (Updated to OptiX 9.0 SDK)</li>
-                </ul>
 
-                <h3 style="margin-top: 30px;">Scene Configurations</h3>
-                <ul>
-                    <li><strong>Simple Scene (Plume):</strong> A single volumetric plume illuminated by an environment map. This setup isolates denoiser behavior in participating media without surface occlusions.</li>
-                    <li><strong>Complex Scene (Amazon Bistro):</strong> A geometrically dense environment populated with fog and over 20,000 emissive triangles, introducing complex visibility, occlusion, and lighting interactions.</li>
-                </ul>
+
+            <div class="tech-grid">
+                <div class="tech-box">
+                    <h3>Network Input (5 Floats)</h3>
+                    <div class="param-list">
+                        <span class="param-tag">NdotL</span>
+                        <span class="param-tag">NdotV</span>
+                        <span class="param-tag">NdotH</span>
+                        <span class="param-tag">LdotH</span>
+                        <span class="param-tag">Roughness</span>
+                    </div>
+                </div>
+                <div class="tech-box">
+                    <h3>Network Output (4 Floats)</h3>
+                    <div class="param-list">
+                        <span class="param-tag">Diffuse</span>
+                        <span class="param-tag">Specular</span>
+                        <span class="param-tag">Fresnel</span>
+                        <span class="param-tag">Clearcoat</span>
+                    </div>
+                </div>
             </div>
 
-            <div class="gallery-grid">
-                <div>
-                    <div class="img-wrapper">
-                        <img src="https://raw.githubusercontent.com/KaanAres10/Denoising-VolumetricReSTIR/main/Docs/oid.png" loading="lazy" alt="OIDN Settings">
-                    </div>
-                    <figcaption>OIDN GPU Parameter Selection</figcaption>
-                </div>
-                <div>
-                    <div class="img-wrapper">
-                        <img src="https://raw.githubusercontent.com/KaanAres10/Denoising-VolumetricReSTIR/main/Docs/opt.png" loading="lazy" alt="OptiX Settings">
-                    </div>
-                    <figcaption>OptiX Denoiser Parameter Selection</figcaption>
-                </div>
+            <div class="text-block" style="margin-top:30px;">
+                <h3 style="font-size:1.1rem; color:var(--text); margin-bottom:12px;">Network Model</h3>
+                <ul>
+                    <li><span class="hl">Encoding:</span> Frequency encoding (6 bands)</li>
+                    <li><span class="hl">Layers:</span> 3 hidden layers of 32 Neurons with LeakyReLU</li>
+                    <li><span class="hl">Activation:</span> Exponential Activation at the end</li>
+                    <li><span class="hl">Loss:</span> Optimized using L2Relative loss with per component weights</li>
+                </ul>
             </div>
         </section>
 
+        <section id="requirements" class="fade-in">
+            <div class="section-header">
+                <span class="sec-num">04</span>
+                <h2>Requirements</h2>
+            </div>
+            <div class="text-block">
+                <p>This project uses <span class="hl">Cooperative Vectors</span> for acceleration.</p>
+                <ul>
+                    <li><strong>Vulkan Cooperative Vector extension:</strong> Requires release driver R570+</li>
+                    <li><strong>Python 3.9+</strong></li>
+                    <li><strong>Slang & SlangPy</strong></li>
+                </ul>
+                <p style="margin-top:20px;">
+                    <em>Fallback:</em> If Cooperative Vectors are not supported, the project will run significantly slower.
+                </p>
+            </div>
+        </section>
 
         <div class="project-footer">
             <div>
                 <h3 style="margin-bottom: 4px;">Interested in the code?</h3>
                 <p style="color: var(--text-muted); font-size: 0.9rem;">Check out the source on GitHub.</p>
             </div>
-            <a href="https://github.com/KaanAres10/Denoising-VolumetricReSTIR" target="_blank" class="github-btn">
+            <a href="https://github.com/KaanAres10/Neural-BRDF" target="_blank" class="github-btn">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                 View Repository
             </a>
