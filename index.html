@@ -345,13 +345,17 @@
             <button class="filter-btn active" data-filter="all">All</button>
             <button class="filter-btn" data-filter="graphics">Graphics</button>
             <button class="filter-btn" data-filter="ai">AI</button>
-            <button class="filter-btn" data-filter="interactive">AR / VR</button>
+            <button class="filter-btn" data-filter="interactive">VR/AR</button>
             <button class="filter-btn" data-filter="web">Web</button>
             <button class="filter-btn" data-filter="systems">Systems</button>
         </div>
 
         <div class="projects-grid">
-            <article class="card" data-category=" graphics ai">
+            <article class="card"
+                     data-category="graphics ai"
+                     data-ord-all="1"
+                     data-ord-graphics="1"
+                     data-ord-ai="2">
                 <div class="card-img-wrap">
                     <img src="https://raw.githubusercontent.com/KaanAres10/Denoising-VolumetricReSTIR/refs/heads/main/Docs/Cover_Comparison.png"
                          alt="Denoising Volumetric ReSTIR"
@@ -372,7 +376,11 @@
                 </div>
             </article>
 
-            <article class="card" data-category="graphics ai">
+            <article class="card"
+                     data-category="graphics ai"
+                     data-ord-all="2"
+                     data-ord-graphics="2"
+                     data-ord-ai="1">
                 <div class="card-img-wrap">
                     <img src="images/neural_brdf_training.png"
                          alt="Neural BRDF Training"
@@ -393,7 +401,11 @@
                 </div>
             </article>
 
-            <article class="card" data-category="web graphics">
+            <article class="card"
+                     data-category="web graphics"
+                     data-ord-all="3"
+                     data-ord-web="1"
+                     data-ord-graphics="3">
                 <div class="card-img-wrap">
                     <img src="images/volume-renderer.png" alt="Volume Renderer" class="card-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
                     <div class="placeholder-pattern" style="display:none"></div>
@@ -408,7 +420,10 @@
                 </div>
             </article>
 
-            <article class="card" data-category="graphics">
+            <article class="card"
+                     data-category="graphics"
+                     data-ord-all="4"
+                     data-ord-graphics="4">
                 <div class="card-img-wrap">
                     <img src="images/opengl-engine.png" alt="OpenGL Engine" class="card-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
                     <div class="placeholder-pattern" style="display:none"></div>
@@ -425,7 +440,11 @@
                 </div>
             </article>
 
-            <article class="card" data-category="interactive graphics">
+            <article class="card"
+                     data-category="interactive graphics"
+                     data-ord-all="5"
+                     data-ord-interactive="1"
+                     data-ord-graphics="5">
                 <div class="card-img-wrap">
                     <img src="images/vr_spotify.png" alt="VR-Musicians" class="card-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
                     <div class="placeholder-pattern" style="display:none"></div>
@@ -441,7 +460,12 @@
                     </div>
                 </div>
             </article>
-            <article class="card" data-category="interactive graphics">
+
+            <article class="card"
+                     data-category="interactive graphics"
+                     data-ord-all="6"
+                     data-ord-interactive="2"
+                     data-ord-graphics="6">
                 <div class="card-img-wrap">
                     <img src="images/project-pursuit.png" alt="Project Pursuit" class="card-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
                     <div class="placeholder-pattern" style="display:none"></div>
@@ -458,7 +482,10 @@
                 </div>
             </article>
 
-            <article class="card" data-category="graphics">
+            <article class="card"
+                     data-category="graphics"
+                     data-ord-all="7"
+                     data-ord-graphics="7">
                 <div class="card-img-wrap">
                     <img src="images/cg-final-raytracer.png" alt="Ray Tracer" class="card-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
                     <div class="placeholder-pattern" style="display:none"></div>
@@ -475,7 +502,10 @@
                 </div>
             </article>
 
-            <article class="card" data-category="systems">
+            <article class="card"
+                     data-category="systems"
+                     data-ord-all="8"
+                     data-ord-systems="1">
                 <div class="card-img-wrap">
                     <img src="images/license-plate-recognition.png" alt="License Plate" class="card-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
                     <div class="placeholder-pattern" style="display:none"></div>
@@ -492,7 +522,10 @@
                 </div>
             </article>
 
-            <article class="card" data-category="graphics">
+            <article class="card"
+                     data-category="graphics"
+                     data-ord-all="9"
+                     data-ord-graphics="8">
                 <div class="card-img-wrap">
                     <img src="images/newton-fractal-ispc.png" alt="ISPC Fractal" class="card-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
                     <div class="placeholder-pattern" style="display:none"></div>
@@ -509,7 +542,10 @@
                 </div>
             </article>
 
-            <article class="card" data-category="systems">
+            <article class="card"
+                     data-category="systems"
+                     data-ord-all="10"
+                     data-ord-systems="2">
                 <div class="card-img-wrap">
                     <div class="placeholder-pattern" style="display:block; opacity:0.15;"></div>
                 </div>
@@ -523,7 +559,10 @@
                 </div>
             </article>
 
-            <article class="card" data-category="systems">
+            <article class="card"
+                     data-category="systems"
+                     data-ord-all="11"
+                     data-ord-systems="3">
                 <div class="card-img-wrap">
                     <div class="placeholder-pattern" style="display:block; opacity:0.15;"></div>
                 </div>
@@ -574,9 +613,7 @@
     const moonIcon = document.getElementById('moon-icon');
     const html = document.documentElement;
 
-    // Check local storage or system preference
     const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
     if (savedTheme === 'light') {
         html.classList.remove('dark');
@@ -601,23 +638,50 @@
         }
     });
 
-    // 2. Filters
+    // 2. Filters & Custom Ordering
     const filterBtns = document.querySelectorAll('.filter-btn');
     const cards = document.querySelectorAll('.card');
 
     filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
+            // Remove active class from all buttons
             filterBtns.forEach(b => b.classList.remove('active'));
+            // Add active class to clicked button
             btn.classList.add('active');
 
             const filter = btn.dataset.filter;
 
+            // Construct the attribute name we are looking for (e.g., data-ord-graphics)
+            // Note: HTML attributes are case insensitive, but we use lowercase here for consistency.
+            const orderAttribute = `data-ord-${filter}`;
+
             cards.forEach(card => {
                 const categories = card.dataset.category.split(' ');
+
                 if (filter === 'all' || categories.includes(filter)) {
+                    // Show the card
                     card.classList.remove('hidden');
+
+                    // Re-run the fade-up animation
+                    card.style.animation = 'none';
+                    card.offsetHeight; /* trigger reflow */
                     card.style.animation = 'fadeUp 0.4s ease forwards';
+
+                    // --- ORDERING LOGIC ---
+                    // Get the order value from the HTML attribute
+                    let orderValue = card.getAttribute(orderAttribute);
+
+                    // If the card doesn't have a specific order for this category,
+                    // push it to the end (999) or keep it at 0.
+                    if (!orderValue) {
+                        orderValue = 999;
+                    }
+
+                    // Apply CSS Order
+                    card.style.order = orderValue;
+
                 } else {
+                    // Hide the card
                     card.classList.add('hidden');
                 }
             });
