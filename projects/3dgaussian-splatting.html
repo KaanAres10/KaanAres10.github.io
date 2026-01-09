@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accelerating 3D Gaussian Splatting</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CONFIGURATION --- */
+        :root {
+            --bg: #050505;
+            --card-bg: #0a0a0a;
+            --card-border: #222;
+            --text: #e5e5e5;
+            --text-muted: #888;
+            /* CUDA Green Accent for Optimization/GPU */
+            --accent: #4ade80;
+            --accent-glow: rgba(74, 222, 128, 0.2);
+            --toc-border: #222;
+            --tech-bg: rgba(255,255,255,0.03);
+            --font-ui: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+            --sidebar-width: 240px;
+        }
+
+        /* Light Mode Overrides */
+        html.light {
+            --bg: #ffffff;
+            --card-bg: #ffffff;
+            --card-border: #e5e7eb;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --accent: #16a34a;
+            --accent-glow: rgba(22, 163, 74, 0.1);
+            --toc-border: #e2e8f0;
+            --tech-bg: #f8fafc;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            background-color: var(--bg); color: var(--text); font-family: var(--font-ui);
+            line-height: 1.7; overflow-x: hidden; transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* --- FX --- */
+        .bg-noise {
+            position: fixed; inset: 0; opacity: 0.03; pointer-events: none; z-index: -1;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        #progress-bar {
+            position: fixed; top: 0; left: 0; height: 3px; background: var(--accent);
+            width: 0%; z-index: 200; transition: width 0.1s; box-shadow: 0 0 10px var(--accent);
+        }
+
+        /* --- NAV --- */
+        .top-nav {
+            position: fixed; top: 20px; left: 20px; right: 20px; z-index: 100;
+            display: flex; justify-content: space-between; max-width: 1200px; margin: 0 auto;
+            pointer-events: none;
+        }
+        .nav-btn {
+            background: rgba(var(--bg), 0.8); backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border); color: var(--text-muted);
+            padding: 8px 16px; border-radius: 99px; text-decoration: none;
+            font-size: 0.9rem; display: flex; align-items: center; gap: 8px;
+            transition: 0.2s; font-family: var(--font-code); cursor: pointer;
+            pointer-events: auto; background-color: var(--card-bg);
+        }
+        .nav-btn:hover { color: var(--text); border-color: var(--text-muted); }
+        .icon-only { padding: 8px; width: 40px; height: 40px; justify-content: center; }
+
+        /* --- LAYOUT --- */
+        .layout {
+            max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: var(--sidebar-width) 1fr;
+            gap: 60px; padding: 0 24px;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar { position: sticky; top: 100px; height: fit-content; display: none; }
+        .toc-title {
+            font-family: var(--font-code); font-size: 0.75rem; color: var(--text-muted);
+            margin-bottom: 16px; letter-spacing: 0.1em;
+        }
+        .toc-list { list-style: none; border-left: 1px solid var(--toc-border); padding: 0; }
+        .toc-item a {
+            display: block; padding: 8px 0 8px 20px; color: var(--text-muted);
+            font-size: 0.9rem; text-decoration: none; transition: 0.2s;
+            border-left: 2px solid transparent; margin-left: -2px;
+        }
+        .toc-item a:hover { color: var(--text); }
+        .toc-item a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 500; }
+
+        /* --- CONTENT --- */
+        .main-content { padding-top: 100px; padding-bottom: 100px; }
+        header { margin-bottom: 80px; }
+        .badge {
+            display: inline-block; padding: 4px 10px; border-radius: 4px;
+            background: rgba(74, 222, 128, 0.1); color: var(--accent);
+            font-family: var(--font-code); font-size: 0.8rem; margin-bottom: 16px;
+            border: 1px solid rgba(74, 222, 128, 0.2);
+        }
+        h1 { font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; line-height: 1.1; margin-bottom: 24px; letter-spacing: -0.03em; }
+        .intro { font-size: 1.2rem; color: var(--text); max-width: 600px; opacity: 0.9; }
+
+        section { margin-bottom: 100px; scroll-margin-top: 100px; }
+        .section-header {
+            display: flex; align-items: baseline; gap: 16px; margin-bottom: 24px;
+            border-bottom: 1px solid var(--card-border); padding-bottom: 16px;
+        }
+        .sec-num { font-family: var(--font-code); color: var(--accent); font-size: 1rem; }
+        h2 { font-size: 1.8rem; font-weight: 700; color: var(--text); }
+        .text-block { color: var(--text); margin-bottom: 30px; font-size: 1.05rem; }
+        .text-block ul { padding-left: 20px; color: var(--text); margin-top: 12px; }
+        .text-block li { margin-bottom: 8px; }
+
+        /* --- MEDIA --- */
+        .img-wrapper {
+            background: var(--bg); border-radius: 8px; overflow: hidden;
+            border: 1px solid var(--card-border); position: relative; margin-bottom: 12px; width: 100%;
+        }
+        .img-wrapper img {
+            display: block; width: 100%; height: auto; transition: transform 0.5s ease;
+        }
+        .img-wrapper.zoom:hover img { transform: scale(1.03); }
+
+        figcaption {
+            margin-top: 10px; font-family: var(--font-code); font-size: 0.8rem; color: var(--text-muted);
+            display: flex; align-items: center; gap: 8px;
+        }
+        figcaption::before { content: ">"; color: var(--accent); }
+
+        /* --- CODE BLOCKS --- */
+        .code-block {
+            background: var(--tech-bg); padding: 20px; border-radius: 8px;
+            border: 1px solid var(--card-border); font-family: var(--font-code);
+            font-size: 0.85rem; overflow-x: auto; color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+        .code-block code { color: var(--text); }
+        .hl-cmd { color: var(--accent); }
+
+        /* --- GRID --- */
+        .gallery-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; margin-top: 30px;
+        }
+        .grid-3 {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 30px;
+        }
+
+        .vertical-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 60px; /* Large gap for separation */
+            margin-top: 40px;
+        }
+
+        a.inline-link {
+            color: var(--accent);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-bottom-color 0.2s;
+        }
+        a.inline-link:hover { border-bottom-color: var(--accent); }
+
+        /* --- FOOTER --- */
+        .project-footer {
+            margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--card-border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .github-btn {
+            background: var(--text); color: var(--bg); padding: 12px 24px;
+            border-radius: 6px; font-weight: 600; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px; transition: 0.2s;
+        }
+        .github-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+
+        .hl { color: var(--accent); font-family: var(--font-code); background: rgba(74, 222, 128, 0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+        /* Animations */
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeUp 0.6s ease-out forwards; opacity: 0; }
+        .d-1 { animation-delay: 0.1s; } .d-2 { animation-delay: 0.2s; }
+
+        @media (min-width: 900px) { .sidebar { display: block; } }
+        @media (max-width: 899px) { .layout { grid-template-columns: 1fr; } h1 { font-size: 2.5rem; } }
+
+        /* Mobile adjustment for authors */
+        @media (max-width: 768px) {
+            .authors-grid { grid-template-columns: 1fr !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-noise"></div>
+<div id="progress-bar"></div>
+
+<div class="top-nav">
+    <a href="../index.html" class="nav-btn">
+        &larr; Portfolio
+    </a>
+    <button id="theme-toggle" class="nav-btn icon-only" aria-label="Toggle Theme">
+        <svg id="sun-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+        <svg id="moon-icon" style="display:none;" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+    </button>
+</div>
+
+<div class="layout">
+    <aside class="sidebar">
+        <div class="toc-title">CONTENTS</div>
+        <ul class="toc-list">
+            <li class="toc-item"><a href="#intro" class="active">Overview</a></li>
+            <li class="toc-item"><a href="#optimizations">01 Optimizations</a></li>
+            <li class="toc-item"><a href="#results">02 Validation</a></li>
+            <li class="toc-item"><a href="#authors">03 Authors</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+
+        <header id="intro" class="fade-in">
+            <div class="badge">CUDA / Optimization</div>
+            <h1>Accelerating 3D Gaussian Splatting</h1>
+            <p class="intro">
+                Research-focused performance optimizations for the CUDA rasterization backend used in 3D Gaussian Splatting training.
+            </p>
+
+            <div class="img-wrapper" style="margin-bottom: 30px; margin-top: 30px;"><img src="https://raw.githubusercontent.com/KaanAres10/Accelerating-3DGaussianSplatting/refs/heads/main/figures/gaussian_render.png" loading="lazy" alt="Rendered view produced by the optimized pipeline"></div>
+            <figcaption>Rendered view produced by the optimized 3D Gaussian Splatting pipeline.</figcaption>
+
+            <div class="text-block" style=" margin-top: 30px;">
+                <p>
+                    <strong>3D Gaussian Splatting</strong> (Kerbl et al. 2023) enables high quality real-time novel view synthesis, but training remains performance sensitive due to heavy forward and backward rasterization passes.
+                </p>
+
+                <p style="margin-top: 20px; margin-bottom: 20px;">
+                    It is a derivative work of <a href="https://github.com/graphdeco-inria/diff-gaussian-rasterization" class="inline-link" target="_blank" rel="noopener noreferrer">graphdeco-inria/diff-gaussian-rasterization</a>, extended to study <strong>memory behavior, kernel efficiency, and training throughput</strong> under visual quality constraints.
+                </p>
+                <p>
+                    This project profiles and accelerates the CUDA kernels by targeting:
+                </p>
+                <ul>
+                    <li>Redundant global memory traffic</li>
+                    <li>Cache behavior (L1/TEX vs shared memory)</li>
+                    <li>Atomic operation pressure in backward passes</li>
+                    <li>Bandwidth-dominated workloads</li>
+                </ul>
+            </div>
+        </header>
+
+        <section id="optimizations" class="fade-in d-1">
+            <div class="section-header">
+                <span class="sec-num">01</span>
+                <h2>Optimizations</h2>
+            </div>
+
+            <div class="text-block">
+                <h3>1. Image Chunk Size Allocation Fix</h3>
+                <p>Corrected buffer allocation by separating per-pixel buffers from per-tile buffers. This reduced temporary image chunk memory from <strong>16.0 MB → 8.4 MB</strong>, improving memory correctness without changing runtime behavior.</p>
+
+                <h3 style="margin-top: 40px;">2. Shared-Memory Caching</h3>
+                <p>Extended the cooperative fetch stage to cache per-Gaussian <strong>feature vectors</strong> and <strong>depth values</strong>. This eliminated redundant per-thread global loads inside the innermost compositing loop.</p>
+
+                <div class="img-wrapper" style="margin-top: 20px;">
+                    <img src="https://raw.githubusercontent.com/KaanAres10/Accelerating-3DGaussianSplatting/refs/heads/main/figures/SharedMemory_Memory_Chart.png" loading="lazy" alt="Nsight Compute Memory Chart">
+                </div>
+                <figcaption>Nsight Compute: Shift from L1/TEX to explicit shared-memory reuse.</figcaption>
+
+                <ul style="margin-top: 20px;">
+                    <li><span class="hl">-95.7%</span> global memory instructions</li>
+                    <li><span class="hl">-68.5%</span> L1/TEX activity</li>
+                    <li><span class="hl">+68.7%</span> Shared-memory loads</li>
+                    <li>Kernel time reduced <strong>2.85 ms → 2.50 ms</strong></li>
+                </ul>
+
+                <p>This shifts reuse from implicit cache behavior to explicit shared-memory reuse, yielding more predictable access patterns and slightly higher SM utilization.</p>
+
+                <blockquote style="border-left: 2px solid var(--accent); padding-left: 20px; color: var(--text-muted); margin: 24px 0; font-style: italic;">
+                    <strong>Note:</strong> In higher iterations, both memory accesses have similar runtime.
+                </blockquote>
+
+                <h3 style="margin-top: 40px;">3. Atomic Operation Reduction (Experimental)</h3>
+                <p>Targets the backward rasterization kernel by staging partial results in shared memory to reduce repeated atomic updates.</p>
+                <p>Achieved <strong>2.88× faster training</strong> (190s → 66s), though with some visual quality degradation due to numerical interference.</p>
+
+                <div class="gallery-grid">
+                    <div>
+                        <div class="img-wrapper">
+                            <img src="https://raw.githubusercontent.com/KaanAres10/Accelerating-3DGaussianSplatting/refs/heads/main/figures/renderAtomicWithout.png" loading="lazy" alt="Without Atomic Reduction">
+                        </div>
+                        <figcaption>Baseline</figcaption>
+                    </div>
+                    <div>
+                        <div class="img-wrapper">
+                            <img src="https://raw.githubusercontent.com/KaanAres10/Accelerating-3DGaussianSplatting/refs/heads/main/figures/renderAtomicWith.png" loading="lazy" alt="With Atomic Reduction">
+                        </div>
+                        <figcaption>Optimized (Reduced Atomics)</figcaption>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 40px;">4. Mixed-Precision Spherical Harmonics</h3>
+                <p>Stores SH coefficients in <strong>FP16</strong> to reduce bandwidth/VRAM usage, converting to FP32 in registers for arithmetic.</p>
+                <ul>
+                    <li><span class="hl">+45.6%</span> training throughput</li>
+                    <li><span class="hl">-18%</span> peak VRAM usage</li>
+                </ul>
+
+                <div class="vertical-stack">
+                    <div>
+                        <div class="img-wrapper"><img src="https://raw.githubusercontent.com/KaanAres10/Accelerating-3DGaussianSplatting/refs/heads/main/figures/rp_30.png" alt="Iter 30"></div>
+                        <figcaption>Iteration 30: Early stages, overhead leads to lower performance.</figcaption>
+                    </div>
+                    <div>
+                        <div class="img-wrapper"><img src="https://raw.githubusercontent.com/KaanAres10/Accelerating-3DGaussianSplatting/refs/heads/main/figures/rp_300.png" alt="Iter 300"></div>
+                        <figcaption>Iteration 300: Transition phase.</figcaption>
+                    </div>
+                    <div>
+                        <div class="img-wrapper"><img src="https://raw.githubusercontent.com/KaanAres10/Accelerating-3DGaussianSplatting/refs/heads/main/figures/rp_3000.png" alt="Iter 3000"></div>
+                        <figcaption>Iteration 3000: Reduced memory traffic yields significant speedup.</figcaption>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="results" class="fade-in d-2">
+            <div class="section-header">
+                <span class="sec-num">02</span>
+                <h2>Validation & Metrics</h2>
+            </div>
+            <div class="text-block">
+                <p>All optimizations are evaluated under identical training settings and validated using profiling tools.</p>
+                <ul>
+                    <li><strong>Image Quality:</strong> NVIDIA FLIP</li>
+                    <li><strong>Profiling:</strong> NVIDIA Nsight Systems, Nsight Compute</li>
+                    <li><strong>Metrics:</strong> Iteration time, Throughput (it/s), Memory Traffic</li>
+                    <li><strong>Datasets:</strong> Playroom (baseline) & Truck (high-load)</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="authors" class="fade-in">
+            <div class="section-header">
+                <span class="sec-num">03</span>
+                <h2>Authors</h2>
+            </div>
+            <div class="text-block">
+                <div class="authors-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 0;">
+                    <div style="background: var(--card-bg); border: 1px solid var(--card-border); padding: 25px; border-radius: 8px;">
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.1rem; color: var(--text);">Kaan Altıntaş</h3>
+                        <p style="font-size: 0.9rem; margin: 0; color: var(--text-muted); line-height: 1.5;">
+                            Image Chunk Size Allocation Fix<br>
+                            Shared-Memory Caching
+                        </p>
+                    </div>
+                    <div style="background: var(--card-bg); border: 1px solid var(--card-border); padding: 25px; border-radius: 8px;">
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.1rem; color: var(--text);">Storm van Wassenaar</h3>
+                        <p style="font-size: 0.9rem; margin: 0; color: var(--text-muted); line-height: 1.5;">
+                            Atomic Operation Reduction
+                        </p>
+                    </div>
+                    <div style="background: var(--card-bg); border: 1px solid var(--card-border); padding: 25px; border-radius: 8px;">
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.1rem; color: var(--text);">Ye Hua</h3>
+                        <p style="font-size: 0.9rem; margin: 0; color: var(--text-muted); line-height: 1.5;">
+                            Mixed-Precision Spherical Harmonics
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="project-footer">
+            <div>
+                <h3 style="margin-bottom: 4px;">Interested in the code?</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Check out the source on GitHub.</p>
+            </div>
+            <a href="https://github.com/KaanAres10/Accelerating-3DGaussianSplatting" target="_blank" class="github-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                View Repository
+            </a>
+        </div>
+
+    </main>
+</div>
+
+<footer style="text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.9rem;">
+    &copy; <span id="year"></span> Kaan Altıntaş
+</footer>
+
+<script>
+    // --- DARK MODE ---
+    const toggleBtn = document.getElementById('theme-toggle');
+    const sunIcon = document.getElementById('sun-icon');
+    const moonIcon = document.getElementById('moon-icon');
+    const html = document.documentElement;
+    const savedTheme = localStorage.getItem('theme');
+
+    function updateIcons(isDark) {
+        if (isDark) { sunIcon.style.display = 'block'; moonIcon.style.display = 'none'; }
+        else { sunIcon.style.display = 'none'; moonIcon.style.display = 'block'; }
+    }
+
+    if (savedTheme === 'light') { html.classList.add('light'); html.classList.remove('dark'); updateIcons(false); }
+    else { html.classList.add('dark'); html.classList.remove('light'); updateIcons(true); }
+
+    toggleBtn.addEventListener('click', () => {
+        if (html.classList.contains('dark')) {
+            html.classList.remove('dark'); html.classList.add('light'); localStorage.setItem('theme', 'light'); updateIcons(false);
+        } else {
+            html.classList.remove('light'); html.classList.add('dark'); localStorage.setItem('theme', 'dark'); updateIcons(true);
+        }
+    });
+
+    // --- SCROLL PROGRESS ---
+    const bar = document.getElementById('progress-bar');
+    window.addEventListener('scroll', () => {
+        const scrollTop = window.scrollY;
+        const docHeight = document.body.scrollHeight - window.innerHeight;
+        const scrollPercent = (scrollTop / docHeight) * 100;
+        bar.style.width = scrollPercent + '%';
+    });
+
+    // --- TOC OBSERVER ---
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const id = entry.target.getAttribute('id');
+            const link = document.querySelector(`.toc-item a[href="#${id}"]`);
+            if (entry.isIntersecting && link) {
+                document.querySelectorAll('.toc-item a').forEach(a => a.classList.remove('active'));
+                link.classList.add('active');
+            }
+        });
+    }, { rootMargin: '-10% 0px -50% 0px' });
+
+    document.querySelectorAll('section, header').forEach(section => { observer.observe(section); });
+    document.getElementById('year').innerText = new Date().getFullYear();
+</script>
+</body>
+</html>
