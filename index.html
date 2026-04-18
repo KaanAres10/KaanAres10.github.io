@@ -29,13 +29,13 @@
 
         /* Dark Mode (Default for Tech) */
         html.dark {
-            --bg: #0a0a0a; /* Deep black/gray */
+            --bg: #0a0a0a;
             --bg-secondary: #171717;
             --text: #ededed;
             --text-muted: #a3a3a3;
             --border: #262626;
-            --primary: #3b82f6; /* Vibrant Blue */
-            --card-bg: rgba(23, 23, 23, 0.6); /* Glassy */
+            --primary: #3b82f6;
+            --card-bg: rgba(23, 23, 23, 0.6);
             --card-border: #333333;
             --shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 4px 20px rgba(0,0,0,0.5);
         }
@@ -165,7 +165,123 @@
 
         .tag { font-size: 0.9rem; font-weight: 500; color: var(--text); }
 
-        /* --- 5. PROJECTS GRID --- */
+        /* --- 5. EXPERIENCE SECTION --- */
+        .experience-list {
+            display: flex; flex-direction: column; gap: 28px;
+            margin-bottom: 80px;
+            padding-left: 20px;
+            border-left: none;
+            position: relative;
+        }
+
+        .experience-list::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+
+        .exp-card {
+            padding: 0;
+            position: relative;
+        }
+
+        .exp-card::before {
+            content: '';
+            position: absolute;
+            left: -23px;
+            top: 8px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            z-index: 1;
+        }
+
+        .exp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 4px;
+        }
+
+        .exp-role {
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .exp-date {
+            font-family: var(--code-font);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .exp-company {
+            display: inline;
+            font-size: 0.9rem;
+            color: var(--primary);
+            margin-bottom: 0;
+        }
+
+        .exp-company a {
+            color: var(--primary);
+        }
+        .exp-company a:hover {
+            text-decoration: underline;
+        }
+
+        .exp-location {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .exp-separator {
+            color: var(--text-muted);
+            margin: 0 6px;
+        }
+
+        .exp-desc {
+            font-size: 0.9rem;
+            color: var(--text);
+            line-height: 1.6;
+            margin-bottom: 0;
+        }
+
+        .exp-highlights {
+            margin-top: 10px;
+            padding-left: 0;
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .exp-highlights li {
+            font-size: 0.88rem;
+            color: var(--text);
+            padding-left: 18px;
+            position: relative;
+            line-height: 1.55;
+        }
+
+        .exp-highlights li::before {
+            content: '›';
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1.1rem;
+            line-height: 1.4;
+        }
+
+        /* --- 6. PROJECTS GRID --- */
         .filters {
             display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 30px;
         }
@@ -248,11 +364,13 @@
         .delay-1 { animation-delay: 0.1s; }
         .delay-2 { animation-delay: 0.2s; }
         .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
 
         /* Mobile */
         @media (max-width: 640px) {
             .hero h1 { font-size: 2.5rem; }
             .nav-link { display: none; }
+            .exp-header { flex-direction: column; }
         }
     </style>
 </head>
@@ -266,6 +384,7 @@
         <a href="#" class="logo">Kaan Altıntaş</a>
         <div class="nav-right">
             <a href="#about" class="nav-link">About</a>
+            <a href="#experience" class="nav-link">Experience</a>
             <a href="#projects" class="nav-link">Projects</a>
             <a href="#contact" class="nav-link">Contact</a>
 
@@ -321,8 +440,8 @@
             <div class="skill-card">
                 <div class="skill-title">Graphics Programming</div>
                 <div class="skill-list">
-                    <span class="tag">Slang</span>  <span class="tag">Vulkan</span>
-                    <span class="tag">OpenGL</span> <span class="tag">GLSL/HLSL</span>
+                    <span class="tag">Vulkan</span> <span class="tag">OpenGL</span>
+                    <span class="tag">GLSL/HLSL/Slang</span>
                     <span class="tag">Three.js</span> <span class="tag">Unity URP</span>
                 </div>
             </div>
@@ -336,7 +455,49 @@
         </div>
     </section>
 
-    <section id="projects" class="animate-up delay-2">
+    <!-- EXPERIENCE SECTION -->
+    <section id="experience" class="animate-up delay-2">
+        <div class="section-header">
+            <h2 class="section-title">Experience</h2>
+        </div>
+        <div class="experience-list">
+
+            <div class="exp-card">
+                <div class="exp-header">
+                    <div class="exp-role">Computer Graphics Engineer Intern</div>
+                    <div class="exp-date">March 2025 — Present</div>
+                </div>
+                <div class="exp-location">
+                    <span class="exp-company"><a href="https://fdcl.nl/" target="_blank">Fiducial</a></span>
+                    <span class="exp-separator">·</span> Delft, NL
+                </div>
+                <p class="exp-desc">
+                    Working on an in-house rendering engine for defence applications.
+                </p>
+            </div>
+
+            <div class="exp-card">
+                <div class="exp-header">
+                    <div class="exp-role">Software Engineer Intern</div>
+                    <div class="exp-date">April 2025 — July 2025</div>
+                </div>
+                <div class="exp-location">
+                    <span class="exp-company"><a href="https://www.defensie.nl/organisatie/commit" target="_blank">Materiel &amp; IT Command, Ministry of Defence</a></span>
+                    <span class="exp-separator">·</span> Amersfoort, NL
+                </div>
+                <p class="exp-desc">
+                    AR project developing a real-time heads-up display on Magic Leap 2 for soldier training and situational awareness.
+                </p>
+                <ul class="exp-highlights">
+                    <li>Integrated live simulation data from VR-Forces using Pitch pRTI (HLA) through a custom C++ DLL backend interfacing with Unity.</li>
+                    <li>Built interactive visualization features including dynamic visual markers, adaptive highlighting, and auto/manual dimming modes.</li>
+                </ul>
+            </div>
+
+        </div>
+    </section>
+
+    <section id="projects" class="animate-up delay-3">
         <div class="section-header">
             <h2 class="section-title">Selected Projects</h2>
         </div>
@@ -607,7 +768,7 @@
         </div>
     </section>
 
-    <section id="contact" class="animate-up delay-3">
+    <section id="contact" class="animate-up delay-4">
         <div class="section-header">
             <h2 class="section-title">Contact</h2>
         </div>
@@ -672,44 +833,31 @@
 
     filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            // Remove active class from all buttons
             filterBtns.forEach(b => b.classList.remove('active'));
-            // Add active class to clicked button
             btn.classList.add('active');
 
             const filter = btn.dataset.filter;
-
-            // Construct the attribute name we are looking for (e.g., data-ord-graphics)
-            // Note: HTML attributes are case insensitive, but we use lowercase here for consistency.
             const orderAttribute = `data-ord-${filter}`;
 
             cards.forEach(card => {
                 const categories = card.dataset.category.split(' ');
 
                 if (filter === 'all' || categories.includes(filter)) {
-                    // Show the card
                     card.classList.remove('hidden');
 
-                    // Re-run the fade-up animation
                     card.style.animation = 'none';
-                    card.offsetHeight; /* trigger reflow */
+                    card.offsetHeight;
                     card.style.animation = 'fadeUp 0.4s ease forwards';
 
-                    // --- ORDERING LOGIC ---
-                    // Get the order value from the HTML attribute
                     let orderValue = card.getAttribute(orderAttribute);
 
-                    // If the card doesn't have a specific order for this category,
-                    // push it to the end (999) or keep it at 0.
                     if (!orderValue) {
                         orderValue = 999;
                     }
 
-                    // Apply CSS Order
                     card.style.order = orderValue;
 
                 } else {
-                    // Hide the card
                     card.classList.add('hidden');
                 }
             });
