@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="description"
+          content="ReLightGS: a deferred relighting pipeline for already trained 3D Gaussian Splatting scenes, operating directly on exported .ply models without retraining.">
+    <meta name="keywords" content="3D Gaussian Splatting, Relighting, Deferred Shading, Inverse Rendering, PBR, Vulkan">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ReLightGS: Relighting Existing 3D Gaussian Splatting Scenes Without Retraining</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+          rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+
+    <style>
+        body {
+            font-family: 'Noto Sans', sans-serif;
+        }
+        .title.is-1 {
+            font-family: 'Google Sans', sans-serif;
+            font-weight: 700;
+        }
+        .title.is-3 {
+            font-family: 'Google Sans', sans-serif;
+            font-weight: 700;
+            margin-top: 1rem;
+        }
+        .publication-title {
+            font-family: 'Google Sans', sans-serif;
+        }
+
+        .publication-authors {
+            font-family: 'Google Sans', sans-serif;
+            font-size: 1.25rem;
+        }
+
+        .publication-venue {
+            color: #555;
+            width: 100%;
+            font-weight: bold;
+        }
+
+        .author-block {
+            margin: 0 0.4rem;
+        }
+
+        .button.is-dark {
+            background-color: #363636;
+            border-color: transparent;
+            color: #fff;
+        }
+        .button.is-rounded {
+            border-radius: 290486px;
+            padding-left: 1em;
+            padding-right: 1em;
+        }
+        .link-block a {
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        .hero-body {
+            padding: 3rem 1.5rem;
+        }
+
+        /* Custom style for the video wrapper */
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 */
+            height: 0;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .video-container video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .teaser-media {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .content h2 {
+            text-align: center;
+            margin-bottom: 1em;
+        }
+
+        .footer {
+            background-color: #f5f5f5;
+            padding: 1rem 1rem;
+        }
+
+        /* Comparison image grid */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .results-grid img {
+            width: 100%;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .caption {
+            text-align: center;
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Quantitative results table */
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        .results-table th, .results-table td {
+            padding: 0.5rem 0.75rem;
+            text-align: center;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        .results-table thead th {
+            border-bottom: 2px solid #363636;
+            font-family: 'Google Sans', sans-serif;
+            font-weight: 700;
+        }
+        .results-table thead tr:first-child th {
+            border-top: 2px solid #363636;
+        }
+        .results-table th.relight-head {
+            border-bottom: 1px solid #bbb;
+        }
+        .results-table.heat td { border: 1px solid #ececec; }
+        /* Per-column ranking heatmap (matches LaTeX rank1..rank4) */
+        .results-table td.r1 { background: #FFB5A3; }   /* best */
+        .results-table td.r2 { background: #FFDCC8; }
+        .results-table td.r3 { background: #FFFFC8; }
+        .results-table td.r4 { background: #FFFFFF; }
+        .results-table td.grp {
+            font-family: 'Google Sans', sans-serif;
+            color: #555; font-style: italic; font-size: 0.82rem;
+            background: #fafafa; white-space: nowrap;
+            border-right: 1.5px solid #888; padding: 0.5rem 0.6rem;
+        }
+        .results-table td.lcol, .results-table th.lcol { text-align: left; }
+        .cite { font-size: 0.78em; font-weight: 400; white-space: nowrap; }
+        /* Vertical column rules (match LaTeX l|c|ccc) */
+        .results-table.heat .lcol { border-right: 1.5px solid #888; }
+        .results-table.heat .mae  { border-right: 1.5px solid #888; }
+        .results-table.heat th.cornh { border-right: 1.5px solid #888; }
+        .results-table tr.grp-sep td { border-top: 2px solid #888; }
+        .results-table tr.ours-row td.lcol { font-weight: 700; color: #c0392b; }
+        .results-table tr.ours-row td { font-weight: 700; }
+        .results-table .impr td { font-style: italic; color: #555; background: #fff; }
+
+        pre {
+            background-color: #f5f5f5;
+            padding: 1rem;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .pipeline-list li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Method comparison grids (TensoIR | GS-IR | Ours | GT) */
+        .cmp {
+            margin-top: 1.5rem;
+        }
+        .cmp-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            align-items: start;
+        }
+        .cmp-row img {
+            width: 100%;
+            border-radius: 6px;
+            display: block;
+        }
+        .cmp-head div {
+            text-align: center;
+            font-family: 'Google Sans', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding-bottom: 4px;
+        }
+        .cmp-head div.ours {
+            color: #c0392b;
+        }
+        .cmp-scene {
+            font-style: italic;
+            color: #555;
+            margin: 1.1rem 0 0.4rem;
+            font-size: 0.95rem;
+        }
+        .envmap-pair {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 1rem;
+        }
+        .envmap-pair img {
+            width: 100%;
+            border-radius: 8px;
+        }
+
+        /* Paper method-figure grids (2-up / 3-up / 4-up with sub-captions) */
+        .fig-grid {
+            display: grid;
+            gap: 12px;
+            margin-top: 1rem;
+        }
+        .fig-2 { grid-template-columns: repeat(2, 1fr); }
+        .fig-3 { grid-template-columns: repeat(3, 1fr); }
+        .fig-4 { grid-template-columns: repeat(4, 1fr); }
+        .fig-grid figure { margin: 0; }
+        .fig-grid img {
+            width: 100%;
+            border-radius: 6px;
+            display: block;
+        }
+        .fig-grid figcaption {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+            font-family: 'Google Sans', sans-serif;
+        }
+        @media (max-width: 600px) {
+            .fig-3, .fig-4 { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* Click-to-zoom lightbox */
+        .fig-grid img, .cmp-row img, .envmap-pair img,
+        img.teaser-media, img.zoomable { cursor: zoom-in; }
+        #lightbox {
+            position: fixed; inset: 0; z-index: 1000;
+            background: rgba(0, 0, 0, 0.92);
+            display: none; align-items: center; justify-content: center;
+            padding: 24px; cursor: zoom-out;
+        }
+        #lightbox.open { display: flex; }
+        #lightbox img {
+            max-width: 95vw; max-height: 90vh;
+            border-radius: 6px; box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+            cursor: default;
+        }
+        #lightbox .lb-cap {
+            position: absolute; bottom: 14px; left: 0; right: 0;
+            text-align: center; color: #eee; font-size: 0.9rem;
+            font-family: 'Google Sans', sans-serif; padding: 0 16px;
+        }
+        #lightbox .lb-close {
+            position: absolute; top: 12px; right: 22px;
+            color: #fff; font-size: 2.2rem; line-height: 1; opacity: 0.85;
+        }
+    </style>
+</head>
+<body>
+
+
+<section class="hero">
+    <div class="hero-body">
+        <div class="container is-max-desktop">
+            <div class="columns is-centered">
+                <div class="column has-text-centered">
+                    <h1 class="title is-1 publication-title">ReLightGS</h1>
+                    <h2 class="subtitle is-4" style="font-family:'Google Sans',sans-serif;">
+                        Relighting Existing 3D Gaussian Splatting Scenes Without Retraining
+                    </h2>
+                    <div class="is-size-5 publication-authors">
+                        <span class="author-block">
+                            <a href="https://github.com/KaanAres10">Kaan Altıntaş</a>
+                        </span>
+                        <span class="author-block">
+                            Responsible Professor: Michael Weinmann
+                        </span>
+                    </div>
+                    <div class="is-size-6 publication-authors" style="margin-top:0.5rem; color:#555;">
+                        <span class="author-block">EEMCS, Delft University of Technology &middot; CSE3000 Research Project</span>
+                    </div>
+                    <div class="column has-text-centered">
+                        <div class="publication-links">
+                            <span class="link-block">
+                                <a href="https://repository.tudelft.nl/"
+                                   class="external-link button is-normal is-rounded is-dark">
+                                    <span class="icon"><i class="fas fa-file-pdf"></i></span>
+                                    <span>Thesis</span>
+                                </a>
+                            </span>
+                            <span class="link-block">
+                                <a href="https://github.com/KaanAres10/ReLightGS-Vulkan"
+                                   class="external-link button is-normal is-rounded is-dark">
+                                    <span class="icon"><i class="fab fa-github"></i></span>
+                                    <span>Code</span>
+                                </a>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container is-max-desktop">
+        <div class="columns is-centered has-text-centered">
+            <div class="column is-four-fifths">
+                <h2 class="title is-3">Abstract</h2>
+                <div class="content has-text-justified">
+                    <p>
+                        3D Gaussian Splatting (3DGS) enables high-quality real-time novel-view synthesis,
+                        but standard trained Gaussian scenes provide little control over illumination. Their
+                        learned appearance entangles lighting, material appearance, and view-dependent effects,
+                        making existing assets difficult to relight without the original training images or
+                        additional optimization.
+                    </p>
+                    <p>
+                        We propose <strong>ReLightGS</strong>, a deferred relighting pipeline for already trained
+                        3DGS scenes that operates directly on fixed exported Gaussian models. The method constructs
+                        a Gaussian G-buffer, reconstructs approximate depth and normals, assigns PBR material
+                        parameters from lifted material labels, and computes illumination with approximate visibility
+                        and occlusion. We evaluate on pretrained vanilla 3DGS scenes from the TensoIR Synthetic
+                        dataset under multiple HDR environment maps and compare against inverse-rendering baselines.
+                        Results show that plausible relighting is possible without retraining, although baked
+                        illumination and approximate geometry remain limitations.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="columns is-centered has-text-centered">
+            <div class="column is-four-fifths">
+                <h2 class="title is-3">Research Question</h2>
+                <div class="content has-text-justified">
+                    <p>
+                        Relightable methods usually require the original multi-view images and additional
+                        optimization. That is impractical when only a pre-trained asset is available, or when a user
+                        simply wants to edit the lighting without waiting for a retraining run. This motivates our
+                        central question:
+                    </p>
+                    <blockquote style="border-left:4px solid #363636; padding-left:1rem; text-align:left; font-style:italic;">
+                        Can new light sources be inserted into an already trained 3D Gaussian Splatting scene,
+                        represented as an exported <code>.ply</code> model, to produce plausible illumination
+                        changes, shadow casting, and appearance modification <em>without retraining the model</em>?
+                    </blockquote>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<section class="section">
+    <div class="container is-max-desktop">
+        <div class="columns is-centered">
+            <div class="column is-full-width">
+                <h2 class="title is-3">Method Overview</h2>
+                <img src="../images/relightgs/pipeline.jpg" class="teaser-media"
+                     alt="ReLightGS pipeline overview" style="margin-bottom:0.5rem;">
+                <div class="caption" style="margin-bottom:1.5rem;">
+                    The pipeline: (1) input fixed Gaussian <code>.ply</code>, (2) estimate depth, normals, and
+                    materials, (3) approximate visibility via shadow maps and screen-space AO, and (4) a deferred
+                    lighting pass that combines all cues with inserted point, spot, directional, and environment lights.
+                </div>
+                <div class="content has-text-justified">
+                    <ol class="pipeline-list">
+                        <li>
+                            <strong>Gaussian G-buffer construction.</strong> We extend 3DGS rasterisation so each
+                            Gaussian accumulates colour, coverage, depth/normal cues, blended material parameters, and
+                            a dominant Gaussian ID into screen-space buffers.
+                        </li>
+                        <li>
+                            <strong>Surface reconstruction.</strong> Per-pixel depth and normals are reconstructed from
+                            the splats, defaulting to iso-opacity depth and max-density-plane normals.
+                        </li>
+                        <li>
+                            <strong>Material estimation.</strong> We segment rendered views with Dense Material
+                            Segmentation (DMS), lift the labels to Gaussians via the Gaussian-ID buffer, and map each
+                            class to approximate glTF metallic-roughness PBR parameters.
+                        </li>
+                        <li>
+                            <strong>Visibility &amp; occlusion.</strong> Shadows are approximated with shadow-depth maps
+                            (PCF), and indirect attenuation with screen-space ambient occlusion.
+                        </li>
+                        <li>
+                            <strong>Deferred lighting.</strong> Each pixel is shaded from the G-buffer with a
+                            Cook&ndash;Torrance GGX BRDF under inserted point, spot, directional, and environment lights.
+                        </li>
+                    </ol>
+                    <p>
+                        ReLightGS is implemented in Vulkan by extending the 3DGS.cpp renderer, and runs interactively
+                        on a laptop NVIDIA RTX 3060.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<section class="section">
+    <div class="container is-max-desktop">
+        <div class="columns is-centered">
+            <div class="column is-full-width">
+                <h2 class="title is-3">Surface Reconstruction</h2>
+                <div class="content has-text-justified">
+                    <p>
+                        A 3DGS scene is a soft volumetric density, not an explicit surface, so the exported
+                        <code>.ply</code> has no per-pixel depth or normals. For depth we compare three estimates:
+                    </p>
+                    <ul class="pipeline-list">
+                        <li>
+                            <strong>Weighted depth.</strong> Averages the depths of all visible Gaussians based on how
+                            much each one contributes to the pixel.
+                        </li>
+                        <li>
+                            <strong>Projected-plane depth.</strong> Treats each Gaussian footprint like a small local
+                            plane, so depth can change across the splat (following RaDe-GS&nbsp;<a href="#ref-radegs">[Zhang 2026]</a>).
+                        </li>
+                        <li>
+                            <strong>Iso-opacity depth.</strong> Chooses the first depth where accumulated opacity
+                            reaches a threshold (&tau; = 0.7), following NVIDIA's method&nbsp;<a href="#ref-nvidia">[NVIDIA]</a>.
+                        </li>
+                    </ul>
+                    <p>
+                        We use iso-opacity depth because it produces sharper surfaces and reduces floating artifacts.
+                    </p>
+                </div>
+                <div class="fig-grid fig-3">
+                    <figure><img src="../images/relightgs/fig/depth_weighted.jpg" alt="Weighted depth" loading="lazy"><figcaption>(a) Weighted</figcaption></figure>
+                    <figure><img src="../images/relightgs/fig/depth_plane.jpg" alt="Projected-plane depth" loading="lazy"><figcaption>(b) Projected-plane</figcaption></figure>
+                    <figure><img src="../images/relightgs/fig/depth_iso.jpg" alt="Iso-opacity depth" loading="lazy"><figcaption>(c) Iso-opacity (default)</figcaption></figure>
+                </div>
+                <div class="caption">
+                    Depth reconstruction comparison. Weighted depth can blur layered regions, projected-plane depth
+                    sharpens local structure, and iso-opacity depth is selected as the default surface estimate.
+                </div>
+
+                <div class="content has-text-justified">
+                    <p style="margin-top:1.5rem;">
+                        Normals are estimated from the depth buffer or the Gaussian geometry, comparing four
+                        estimators:
+                    </p>
+                    <ul class="pipeline-list">
+                        <li>
+                            <strong>Cross-product normals.</strong> Compute normals from neighbouring depth pixels,
+                            but can be noisy near edges.
+                        </li>
+                        <li>
+                            <strong>Plane-fit normals.</strong> Fit a small local plane to nearby depth points, making
+                            them smoother.
+                        </li>
+                        <li>
+                            <strong>Projected-plane normals.</strong> Use the local depth plane of each Gaussian,
+                            giving detailed variation but can have artifacts.
+                        </li>
+                        <li>
+                            <strong>Max-density plane normals.</strong> Compute normals directly from each Gaussian's
+                            covariance and camera direction&nbsp;<a href="#ref-kheradmand">[Kheradmand 2025]</a><a href="#ref-nvidia">[NVIDIA]</a>.
+                        </li>
+                    </ul>
+                    <p>
+                        We use max-density plane normals because they are more coherent and less affected by
+                        depth-buffer noise, making them more stable.
+                    </p>
+                </div>
+                <div class="fig-grid fig-4">
+                    <figure><img src="../images/relightgs/fig/norm_cross.jpg" alt="Cross-product normals" loading="lazy"><figcaption>(a) Cross</figcaption></figure>
+                    <figure><img src="../images/relightgs/fig/norm_plane.jpg" alt="Plane-fit normals" loading="lazy"><figcaption>(b) Plane-fit</figcaption></figure>
+                    <figure><img src="../images/relightgs/fig/norm_proj.jpg" alt="Projected-plane normals" loading="lazy"><figcaption>(c) Projected-plane</figcaption></figure>
+                    <figure><img src="../images/relightgs/fig/norm_maxdensity.jpg" alt="Max-density plane normals" loading="lazy"><figcaption>(d) Max density (default)</figcaption></figure>
+                </div>
+                <div class="caption">
+                    Normal estimation comparison. Depth-based normals can amplify depth noise, projected-plane
+                    gradient normals show high-frequency variation, and max-density plane normals are more coherent.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<section class="section">
+    <div class="container is-max-desktop">
+        <div class="columns is-centered">
+            <div class="column is-full-width">
+                <h2 class="title is-3">Material Estimation</h2>
+                <div class="content has-text-justified">
+                    <p>
+                        We use Dense Material Segmentation (DMS)&nbsp;<a href="#ref-dms">[Upchurch 2022]</a>, an AI-based material-segmentation model, to predict
+                        2D material labels from rendered views (auxiliary views on a hemisphere around the scene:
+                        three elevations and eight azimuths, plus a top-down view). These labels are assigned to
+                        individual Gaussians using the Gaussian-ID buffer, then mapped to approximate Physically Based
+                        Rendering (PBR) parameters: diffuse, specular, roughness, and metallic.
+                    </p>
+                </div>
+                <div class="fig-grid fig-2">
+                    <figure><img src="../images/relightgs/fig/mat_rgb.jpg" alt="Input view" loading="lazy"><figcaption>(a) Input view</figcaption></figure>
+                    <figure><img src="../images/relightgs/fig/mat_labels.jpg" alt="Labeled view" loading="lazy"><figcaption>(b) Labeled view</figcaption></figure>
+                </div>
+                <div class="caption">
+                    A segmented view transferred to visible Gaussians via the Gaussian-ID buffer. Example labels
+                    include foliage (green), wood (brown), and fabric/cloth (purple).
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<section class="section">
+    <div class="container is-max-desktop">
+        <div class="columns is-centered">
+            <div class="column is-full-width">
+                <h2 class="title is-3">Visibility &amp; Occlusion</h2>
+                <div class="content has-text-justified">
+                    <p>
+                        Direct-light visibility is approximated with shadow-depth maps, and local indirect
+                        attenuation with screen-space ambient occlusion (SSAO)&nbsp;<a href="#ref-ssao">[Mittring 2007]</a>
+                        computed from the reconstructed depth and normal buffers.
+                    </p>
+                </div>
+                <div class="fig-grid fig-2">
+                    <figure><img src="../images/relightgs/fig/ao_rgb.jpg" alt="Input render" loading="lazy"><figcaption>(a) Input render</figcaption></figure>
+                    <figure><img src="../images/relightgs/fig/ao_vis.jpg" alt="AO visibility" loading="lazy"><figcaption>(b) AO visibility</figcaption></figure>
+                </div>
+                <div class="caption">
+                    The AO visibility map darkens areas such as beneath the bench and dense foliage.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<section class="section">
+    <div class="container is-max-desktop">
+        <div class="columns is-centered">
+            <div class="column is-full-width">
+                <h2 class="title is-3">Deferred Lighting</h2>
+                <div class="content has-text-justified">
+                    <p>
+                        The final pass combines all estimated cues from the Gaussian G-buffer: depth, normals, colour,
+                        materials, shadows, and ambient occlusion. Using these buffers, ReLightGS applies point, spot,
+                        directional, and environment lighting (with a Cook&ndash;Torrance GGX BRDF) to produce the
+                        final relit result.
+                    </p>
+                </div>
+                <div class="fig-grid fig-2">
+                    <figure><img src="../images/relightgs/fig/light_rgb.jpg" alt="Input render" loading="lazy"><figcaption>(a) Input render</figcaption></figure>
+                    <figure><img src="../images/relightgs/fig/light_relit.jpg" alt="Relit result" loading="lazy"><figcaption>(b) Relit result</figcaption></figure>
+                </div>
+                <div class="caption">
+                    The deferred shading pass uses the G-buffer to apply inserted lighting and shadows.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<section class="section">
+    <div class="container is-max-desktop">
+        <div class="columns is-centered has-text-centered">
+            <div class="column is-four-fifths">
+                <h2 class="title is-3">Normal Reconstruction</h2>
+                <video class="teaser-media" autoplay muted loop playsinline
+                       style="max-width:480px; margin-left:auto; margin-right:auto; box-shadow:none; border-radius:0; background:transparent;">
+                    <source src="../images/relightgs/normals.mp4" type="video/mp4">
+                </video>
+                <div class="caption">
+                    Max-density-plane normals reconstructed directly from the fixed Gaussian geometry for the
+                    armadillo, ficus, hotdog, and lego scenes.
+                </div>
+            </div>
+        </div>
+
+        <div class="columns is-centered">
+            <div class="column is-full-width">
+                <div class="content has-text-justified">
+                    <p style="margin-top:1.5rem;">
+                        Qualitative comparison of reconstructed normals on the ficus and lego scenes. TensoIR stays
+                        closest to the ground truth and GS-IR shows visible artifacts and normal-direction errors,
+                        while ReLightGS preserves surface orientation more consistently than GS-IR, though its normals
+                        appear thicker around fine detail.
+                    </p>
+                </div>
+                <div class="cmp">
+                    <div class="cmp-row cmp-head">
+                        <div>TensoIR</div><div>GS-IR</div><div class="ours">Ours</div><div>GT</div>
+                    </div>
+                    <div class="cmp-scene">Ficus</div>
+                    <div class="cmp-row">
+                        <img src="../images/relightgs/comp/tensoir_ficus_normal.jpg" alt="TensoIR ficus normal" loading="lazy">
+                        <img src="../images/relightgs/comp/gsir_ficus_normal.jpg" alt="GS-IR ficus normal" loading="lazy">
+                        <img src="../images/relightgs/comp/ours_ficus_normal.jpg" alt="Ours ficus normal" loading="lazy">
+                        <img src="../images/relightgs/comp/gt_ficus_normal.jpg" alt="GT ficus normal" loading="lazy">
+                    </div>
+                    <div class="cmp-scene">Lego</div>
+                    <div class="cmp-row">
+                        <img src="../images/relightgs/comp/tensoir_lego_normal.jpg" alt="TensoIR lego normal" loading="lazy">
+                        <img src="../images/relightgs/comp/gsir_lego_normal.jpg" alt="GS-IR lego normal" loading="lazy">
+                        <img src="../images/relightgs/comp/ours_lego_normal.jpg" alt="Ours lego normal" loading="lazy">
+                        <img src="../images/relightgs/comp/gt_lego_normal.jpg" alt="GT lego normal" loading="lazy">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<section class="section">
+    <div class="container is-max-desktop">
+        <div class="columns is-centered">
+            <div class="column is-full-width">
+                <h2 class="title is-3">Environment-Map Relighting</h2>
+                <div class="content has-text-justified">
+                    <p>
+                        We relight the fixed Gaussian scenes under HDR environment maps. ReLightGS produces
+                        reasonable relighting directly from the fixed representation, though illumination baked into
+                        the original Gaussian colours still influences the final appearance. The overview below shows
+                        all four scenes under a city environment; the per-method comparison further down
+                        focuses on the <em>lego</em> scene against inverse-rendering baselines and the ground truth.
+                    </p>
+                </div>
+
+                <video class="teaser-media" autoplay muted loop playsinline
+                       style="max-width:480px; margin-left:auto; margin-right:auto;">
+                    <source src="../images/relightgs/relight_grid_2x2.mp4" type="video/mp4">
+                </video>
+                <div class="caption" style="margin-bottom:1.5rem;">
+                    All four scenes relit under a city environment, produced directly from the
+                    fixed <code>.ply</code> models.
+                </div>
+
+                <div class="envmap-pair">
+                    <div>
+                        <img src="../images/relightgs/env_city.jpg" alt="City HDR environment map" loading="lazy">
+                        <div class="caption">City HDR environment map</div>
+                    </div>
+                    <div>
+                        <img src="../images/relightgs/env_night.jpg" alt="Night HDR environment map" loading="lazy">
+                        <div class="caption">Night HDR environment map</div>
+                    </div>
+                </div>
+
+                <div class="cmp">
+                    <div class="cmp-row cmp-head">
+                        <div>TensoIR</div><div>GS-IR</div><div class="ours">Ours</div><div>GT</div>
+                    </div>
+                    <div class="cmp-scene">Lego City</div>
+                    <div class="cmp-row">
+                        <img src="../images/relightgs/comp/tensoir_lego_city.jpg" alt="TensoIR lego city" loading="lazy">
+                        <img src="../images/relightgs/comp/gsir_lego_city.jpg" alt="GS-IR lego city" loading="lazy">
+                        <img src="../images/relightgs/comp/ours_lego_city.jpg" alt="Ours lego city" loading="lazy">
+                        <img src="../images/relightgs/comp/gt_lego_city.jpg" alt="GT lego city" loading="lazy">
+                    </div>
+                    <div class="cmp-scene">Lego Night</div>
+                    <div class="cmp-row">
+                        <img src="../images/relightgs/comp/tensoir_lego_night.jpg" alt="TensoIR lego night" loading="lazy">
+                        <img src="../images/relightgs/comp/gsir_lego_night.jpg" alt="GS-IR lego night" loading="lazy">
+                        <img src="../images/relightgs/comp/ours_lego_night.jpg" alt="Ours lego night" loading="lazy">
+                        <img src="../images/relightgs/comp/gt_lego_night.jpg" alt="GT lego night" loading="lazy">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<section class="section">
+    <div class="container is-max-desktop">
+        <div class="columns is-centered">
+            <div class="column is-full-width">
+                <h2 class="title is-3">Quantitative Results</h2>
+                <div class="content has-text-justified">
+                    <p>
+                        We evaluate on the four object-centric TensoIR Synthetic scenes
+                        (armadillo, ficus, hotdog, lego), with relighting metrics averaged over five HDR
+                        environment maps (bridge, city, fireplace, forest, night). The scenes are vanilla 3DGS
+                        models trained for 30,000 iterations, and baseline numbers are adapted from the GS-IR
+                        evaluation. For this environment-map benchmark the map intensity is set to 5.0, and
+                        screen-space ambient occlusion and shadow mapping are disabled, since it uses only
+                        environment lighting. Despite operating post-hoc on a fixed vanilla 3DGS representation,
+                        with no access to the original images and no retraining, ReLightGS improves over the
+                        Gaussian-based GS-IR baseline on every metric.
+                    </p>
+                </div>
+
+                <div style="overflow-x:auto;">
+                    <table class="results-table heat">
+                        <thead>
+                            <tr>
+                                <th rowspan="2" class="cornh"></th>
+                                <th rowspan="2" class="lcol">Method</th>
+                                <th rowspan="2" class="mae">Normal<br>MAE&darr;</th>
+                                <th colspan="3" class="relight-head">Relight</th>
+                            </tr>
+                            <tr>
+                                <th>PSNR&uarr;</th>
+                                <th>SSIM&uarr;</th>
+                                <th>LPIPS&darr;</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td rowspan="4" class="grp">Neural field<br>based rendering</td>
+                                <td class="lcol">NeRFactor</td>
+                                <td class="r4 mae">6.314</td><td class="r4">23.383</td><td class="r2">0.908</td><td class="r4">0.131</td>
+                            </tr>
+                            <tr>
+                                <td class="lcol">InvRender</td>
+                                <td class="r3 mae">5.074</td><td class="r3">23.973</td><td class="r3">0.901</td><td class="r3">0.101</td>
+                            </tr>
+                            <tr>
+                                <td class="lcol">NVDiffrec</td>
+                                <td class="r4 mae">6.078</td><td class="r4">19.880</td><td class="r4">0.879</td><td class="r3">0.104</td>
+                            </tr>
+                            <tr>
+                                <td class="lcol">TensoIR</td>
+                                <td class="r1 mae">4.100</td><td class="r1">28.580</td><td class="r1">0.944</td><td class="r1">0.081</td>
+                            </tr>
+                            <tr class="grp-sep">
+                                <td rowspan="2" class="grp">Gaussian splat<br>based rendering</td>
+                                <td class="lcol">GS-IR</td>
+                                <td class="r2 mae">4.948</td><td class="r3">24.374</td><td class="r3">0.885</td><td class="r2">0.096</td>
+                            </tr>
+                            <tr class="ours-row">
+                                <td class="lcol">Ours</td>
+                                <td class="r2 mae">4.780</td><td class="r2">25.920</td><td class="r2">0.906</td><td class="r2">0.095</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="caption">
+                    Quantitative comparison on the TensoIR Synthetic dataset. Cells are shaded by per-column rank
+                    (salmon = best, white = worst). Baseline results are adapted from GS-IR; relighting metrics
+                    are averaged over five HDR environment maps (bridge, city, fireplace, forest, night).
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<section class="section">
+    <div class="container is-max-desktop">
+        <div class="columns is-centered">
+            <div class="column is-full-width">
+                <h2 class="title is-3">Ablation: Material-Label Assignment</h2>
+                <div class="content has-text-justified">
+                    <p>
+                        Assigning approximate PBR parameters from lifted material labels (vs. a single default
+                        material) improves environment-map relighting while leaving geometry untouched
+                        (Normal MAE is unchanged, since labels do not affect normal estimation).
+                    </p>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="results-table heat">
+                        <thead>
+                            <tr>
+                                <th rowspan="2" class="lcol">Variant</th>
+                                <th rowspan="2" class="mae">Normal<br>MAE&darr;</th>
+                                <th colspan="3" class="relight-head">Relight</th>
+                            </tr>
+                            <tr>
+                                <th>PSNR&uarr;</th>
+                                <th>SSIM&uarr;</th>
+                                <th>LPIPS&darr;</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="lcol">w/o material labels</td>
+                                <td class="r2 mae">4.78</td><td class="r2">24.58</td><td class="r2">0.8836</td><td class="r2">0.1106</td>
+                            </tr>
+                            <tr class="ours-row">
+                                <td class="lcol">w/ material labels</td>
+                                <td class="r1 mae">4.78</td><td class="r1">25.92</td><td class="r1">0.9060</td><td class="r1">0.0950</td>
+                            </tr>
+                            <tr class="impr">
+                                <td class="lcol">Improvement</td>
+                                <td class="mae">&ndash;</td><td>+1.34</td><td>+0.0224</td><td>&minus;0.0156</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="content has-text-justified">
+                    <p style="margin-top:1.5rem;">
+                        We also test the effect qualitatively on the real <em>bicycle</em> scene from Mip-NeRF 360.
+                        Even when the non-labeled variant is given a stronger default material, the labeled variant
+                        produces more material-dependent variation, for example a more appropriate response
+                        on the bicycle tires.
+                    </p>
+                </div>
+                <div class="fig-grid fig-2">
+                    <figure><img src="../images/relightgs/fig/bike_nolabels.jpg" alt="Without material labels" loading="lazy"><figcaption>w/o material labels</figcaption></figure>
+                    <figure><img src="../images/relightgs/fig/bike_labels.jpg" alt="With material labels" loading="lazy"><figcaption>w/ material labels</figcaption></figure>
+                </div>
+                <div class="caption">
+                    Qualitative ablation on material-label assignment for the bicycle scene (Mip-NeRF 360).
+                    The labeled result produces more appropriate material variation.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<section class="section">
+    <div class="container is-max-desktop">
+        <div class="columns is-centered">
+            <div class="column is-full-width">
+                <h2 class="title is-3">Limitations &amp; Failure Cases</h2>
+                <div class="content has-text-justified">
+                    <p>
+                        Although our method can produce plausible relighting from fixed Gaussian scenes, several
+                        limitations remain. <strong>First, the reconstructed normals can become overly smooth.</strong>
+                        The armadillo normal map preserves the overall surface orientation, but fine geometric details
+                        are partly smoothed out compared with the ground truth and inverse-rendering baselines.
+                        <strong>Second, the original Gaussian colours can still contain baked illumination</strong>, since
+                        we use the spherical-harmonics appearance as albedo. In the ficus example, a yellowish tint
+                        remains in parts of the plant even though the target ground truth has a different lighting
+                        balance. <strong>Finally, material-label assignment is approximate</strong>, so some Gaussians may
+                        receive incorrect material classes, introducing variations that may not match the true scene.
+                    </p>
+                </div>
+
+                <div class="cmp">
+                    <div class="cmp-row cmp-head">
+                        <div>TensoIR</div><div>GS-IR</div><div class="ours">Ours</div><div>GT</div>
+                    </div>
+                    <div class="cmp-scene">Armadillo normal reconstruction</div>
+                    <div class="cmp-row">
+                        <img src="../images/relightgs/comp/tensoir_armadillo_normal.jpg" alt="TensoIR armadillo normal" loading="lazy">
+                        <img src="../images/relightgs/comp/gsir_armadillo_normal.jpg" alt="GS-IR armadillo normal" loading="lazy">
+                        <img src="../images/relightgs/comp/ours_armadillo_normal.jpg" alt="Ours armadillo normal" loading="lazy">
+                        <img src="../images/relightgs/comp/gt_armadillo_normal.jpg" alt="GT armadillo normal" loading="lazy">
+                    </div>
+                    <div class="caption">
+                        Failure case for normal reconstruction on the armadillo scene. Our reconstruction preserves the
+                        main surface orientation but smooths out part of the fine geometric detail.
+                    </div>
+
+                    <div class="cmp-row cmp-head" style="margin-top:1.5rem;">
+                        <div>TensoIR</div><div>GS-IR</div><div class="ours">Ours</div><div>GT</div>
+                    </div>
+                    <div class="cmp-scene">Ficus relighting (city)</div>
+                    <div class="cmp-row">
+                        <img src="../images/relightgs/comp/tensoir_ficus_city.jpg" alt="TensoIR ficus city" loading="lazy">
+                        <img src="../images/relightgs/comp/gsir_ficus_city.jpg" alt="GS-IR ficus city" loading="lazy">
+                        <img src="../images/relightgs/comp/ours_ficus_city.jpg" alt="Ours ficus city" loading="lazy">
+                        <img src="../images/relightgs/comp/gt_ficus_city.jpg" alt="GT ficus city" loading="lazy">
+                    </div>
+                    <div class="caption">
+                        Failure case for relighting on the ficus scene under the city HDR environment map. Our result
+                        still retains baked colour and illumination from the original Gaussian appearance.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<section class="section">
+    <div class="container is-max-desktop">
+        <div class="columns is-centered">
+            <div class="column is-full-width">
+                <h2 class="title is-3">Key Findings</h2>
+                <div class="content has-text-justified">
+                    <ul>
+                        <li>
+                            <strong>Relighting without retraining is feasible.</strong> Useful geometry, material,
+                            and visibility cues can be recovered from a fixed exported <code>.ply</code> Gaussian
+                            model and used for plausible, interactive relighting.
+                        </li>
+                        <li>
+                            <strong>Competitive with inverse rendering.</strong> ReLightGS improves over the
+                            Gaussian-based GS-IR baseline on Normal MAE, PSNR, SSIM, and LPIPS, despite never
+                            seeing the original multi-view images.
+                        </li>
+                        <li>
+                            <strong>Material labels help.</strong> Lifting DMS labels to Gaussians and mapping them
+                            to PBR parameters gives a clear quality gain over a single default material.
+                        </li>
+                        <li>
+                            <strong>Limitations.</strong> Reconstructed normals can be overly smooth, baked
+                            illumination remains in the spherical-harmonic appearance used as albedo, and
+                            approximate label assignment can introduce local material errors.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<section class="section">
+    <div class="container is-max-desktop content">
+        <h2 class="title is-3">References</h2>
+        <div class="references">
+            <p>[Kerbl 2023] Kerbl, B., Kopanas, G., Leimkühler, T. and Drettakis, G., 2023. 3D Gaussian Splatting for Real-Time Radiance Field Rendering. <i>ACM Transactions on Graphics (TOG)</i>, 42(4).</p>
+            <p id="ref-gsir">[Liang 2024] Liang, Z., Zhang, Q., Feng, Y., Shan, Y. and Jia, K., 2024. GS-IR: 3D Gaussian Splatting for Inverse Rendering. <i>CVPR</i>, pp.21644-21653.</p>
+            <p id="ref-tensoir">[Jin 2023] Jin, H., Liu, I., Xu, P., Zhang, X., Han, S., Bi, S., Zhou, X., Xu, Z. and Su, H., 2023. TensoIR: Tensorial Inverse Rendering. <i>CVPR</i>, pp.165-174.</p>
+            <p id="ref-nerfactor">[Zhang 2021] Zhang, X., Srinivasan, P.P., Deng, B., Debevec, P., Freeman, W.T. and Barron, J.T., 2021. NeRFactor: Neural Factorization of Shape and Reflectance under an Unknown Illumination. <i>ACM Transactions on Graphics (TOG)</i>, 40(6).</p>
+            <p id="ref-invrender">[Zhang 2022] Zhang, Y., Sun, J., He, X., Fu, H., Jia, R. and Zhou, X., 2022. Modeling Indirect Illumination for Inverse Rendering (InvRender). <i>CVPR</i>, pp.18643-18652.</p>
+            <p id="ref-nvdiffrec">[Munkberg 2022] Munkberg, J., Hasselgren, J., Shen, T., Gao, J., Chen, W., Evans, A., Müller, T. and Fidler, S., 2022. Extracting Triangular 3D Models, Materials, and Lighting From Images (NVDiffrec). <i>CVPR</i>, pp.8280-8290.</p>
+            <p id="ref-radegs">[Zhang 2026] Zhang, B., Fang, C., Shrestha, R., Liang, Y., Long, X. and Tan, P., 2026. RaDe-GS: Rasterizing Depth in Gaussian Splatting. <i>ACM Transactions on Graphics (TOG)</i>, 45(2).</p>
+            <p id="ref-kheradmand">[Kheradmand 2025] Kheradmand, S., Vicini, D., Kopanas, G., Lagun, D., Yi, K.M., Matthews, M. and Tagliasacchi, A., 2025. StochasticSplats: Stochastic Rasterization for Sorting-Free 3D Gaussian Splatting. <i>ICCV</i>, pp.26326-26335.</p>
+            <p id="ref-dms">[Upchurch 2022] Upchurch, P. and Niu, R., 2022. A Dense Material Segmentation Dataset for Indoor and Outdoor Scene Parsing. <i>ECCV</i>, pp.450-466.</p>
+            <p id="ref-ssao">[Mittring 2007] Mittring, M., 2007. Finding Next Gen: CryEngine 2. <i>ACM SIGGRAPH 2007 Courses</i>, pp.97-121.</p>
+            <p>[Gao 2024] Gao, S., 2024. 3DGS.cpp: High Performance 3D Gaussian Splatting with Vulkan.</p>
+            <p id="ref-nvidia">[NVIDIA] NVIDIA. vk_gaussian_splatting: Lighting, Shading and Shadows.</p>
+        </div>
+    </div>
+</section>
+
+
+<footer class="footer">
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column is-8">
+                <div class="content">
+                    <p>
+                        Thanks to the authors of <a
+                            href="https://github.com/nerfies/nerfies.github.io">Nerfies</a> for open-sourcing the website template.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<div id="lightbox" aria-hidden="true">
+    <span class="lb-close">&times;</span>
+    <img alt="">
+    <div class="lb-cap"></div>
+</div>
+<script>
+    (function () {
+        var lb = document.getElementById('lightbox');
+        var lbImg = lb.querySelector('img');
+        var lbCap = lb.querySelector('.lb-cap');
+        var sel = '.fig-grid img, .cmp-row img, .envmap-pair img, img.teaser-media, img.zoomable';
+
+        document.querySelectorAll(sel).forEach(function (im) {
+            im.addEventListener('click', function () {
+                lbImg.src = im.currentSrc || im.src;
+                lbImg.alt = im.alt || '';
+                var cap = im.alt || '';
+                var fc = im.closest('figure');
+                if (fc) { var f = fc.querySelector('figcaption'); if (f) cap = f.textContent; }
+                lbCap.textContent = cap;
+                lb.classList.add('open');
+                lb.setAttribute('aria-hidden', 'false');
+            });
+        });
+
+        function close() {
+            lb.classList.remove('open');
+            lb.setAttribute('aria-hidden', 'true');
+            lbImg.removeAttribute('src');
+        }
+        lb.addEventListener('click', function (e) { if (e.target !== lbImg) close(); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    })();
+</script>
+
+</body>
+</html>
