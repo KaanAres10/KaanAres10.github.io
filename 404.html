@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Redirecting&hellip;</title>
+    <script>
+      // Catch-all: any casing of the project slug, with or without a trailing
+      // dot/slash (e.g. a period glued on from the end of a sentence), lands
+      // on the real page.
+      (function () {
+        var target = "/projects/relightgs";
+        // Lower-case, then trim any trailing slashes or dots.
+        var path = window.location.pathname.toLowerCase().replace(/[\/.]+$/, "");
+        if (path.indexOf("relightgs") !== -1 && path !== target) {
+          window.location.replace(target + window.location.search + window.location.hash);
+        }
+      })();
+    </script>
+</head>
+<body>
+    <h1>404 &mdash; Page not found</h1>
+    <p>Sorry, that page doesn't exist. <a href="/">Go to the homepage</a>.</p>
+</body>
+</html>
