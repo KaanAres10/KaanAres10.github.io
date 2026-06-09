@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="description"
-          content="ReLightGS: a deferred relighting pipeline for already trained 3D Gaussian Splatting scenes, operating directly on exported .ply models without retraining.">
+          content="ReLightGS: a deferred relighting pipeline for already trained 3D Gaussian Splatting scenes, operating directly on exported Gaussian models without retraining.">
     <meta name="keywords" content="3D Gaussian Splatting, Relighting, Deferred Shading, Inverse Rendering, PBR, Vulkan">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ReLightGS: Relighting Existing 3D Gaussian Splatting Scenes Without Retraining</title>
@@ -374,7 +374,7 @@
                          style="max-width:840px; margin-left:auto; margin-right:auto;">
                     <div class="caption">
                         Comparison of the original 3D Gaussian Splatting appearance and our relit result,
-                        produced directly from the fixed <code>.ply</code> model without retraining.
+                        produced directly from the fixed Gaussian splatting model without retraining.
                     </div>
                 </div>
             </div>
@@ -391,19 +391,19 @@
                     <p>
                         3D Gaussian Splatting (3DGS) enables high-quality real-time novel-view synthesis,
                         but standard trained Gaussian scenes provide little control over illumination. Their
-                        learned appearance entangles lighting, material appearance, and view-dependent effects,
-                        making existing assets difficult to relight without the original training images or
-                        additional optimization.
+                        learned appearance entangles lighting and material appearance, making existing scenes
+                        difficult to relight without the original training images or additional optimization.
                     </p>
                     <p>
                         We propose <strong>ReLightGS</strong>, a deferred relighting pipeline for already trained
-                        3DGS scenes that operates directly on fixed exported Gaussian models. The method constructs
-                        a Gaussian G-buffer, reconstructs approximate depth and normals, assigns PBR material
-                        parameters from lifted material labels, and computes illumination with approximate visibility
-                        and occlusion. We evaluate on pretrained vanilla 3DGS scenes from the TensoIR Synthetic
-                        dataset under multiple HDR environment maps and compare against inverse-rendering baselines.
-                        Results show that plausible relighting is possible without retraining, although baked
-                        illumination and approximate geometry remain limitations.
+                        3DGS scenes that operates directly on fixed exported Gaussian models, without access to the
+                        images used to train them and without further retraining. The method constructs a Gaussian
+                        G-buffer, reconstructs approximate depth and normals, assigns PBR material parameters from
+                        lifted material labels, and computes illumination with approximate visibility and occlusion.
+                        Our evaluation uses pretrained vanilla 3DGS scenes from the TensoIR Synthetic dataset under
+                        multiple HDR environment maps with comparison to inverse-rendering baselines. Our approach
+                        shows that plausible relighting is possible without retraining, although baked illumination
+                        and approximate geometry remain limitations.
                     </p>
                 </div>
             </div>
@@ -436,7 +436,7 @@
                 <img src="../images/relightgs/pipeline.jpg" class="teaser-media"
                      alt="ReLightGS pipeline overview" style="margin-bottom:0.5rem;">
                 <div class="caption">
-                    Our method pipeline: from a fixed Gaussian <code>.ply</code> to a relit image.
+                    Our method pipeline: from a fixed Gaussian scene to a relit image.
                 </div>
             </div>
         </div>
@@ -503,7 +503,10 @@
                             </tr>
                             <tr class="ours-row">
                                 <td class="lcol">Ours</td>
-                                <td class="r2 mae">4.780</td><td class="r2">25.920</td><td class="r2">0.906</td><td class="r2">0.095</td>
+                                <td class="r2 mae">4.780</td>
+                                <td class="r2">25.920</td>
+                                <td class="r2">0.906</td>
+                                <td class="r2">0.095</td>
                             </tr>
                         </tbody>
                     </table>
@@ -521,7 +524,7 @@
                         </video>
                         <div class="caption">
                             All four scenes relit under a city environment, produced directly from the
-                            fixed <code>.ply</code> models.
+                            fixed Gaussian models.
                         </div>
                     </div>
                     <div>
