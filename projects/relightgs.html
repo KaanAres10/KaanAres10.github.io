@@ -400,10 +400,10 @@
                         images used to train them and without further retraining. The method constructs a Gaussian
                         G-buffer, reconstructs approximate depth and normals, assigns PBR material parameters from
                         lifted material labels, and computes illumination with approximate visibility and occlusion.
-                        Our evaluation uses pretrained vanilla 3DGS scenes from the TensoIR Synthetic dataset under
-                        multiple HDR environment maps with comparison to inverse-rendering baselines. Our approach
-                        shows that plausible relighting is possible without retraining, although baked illumination
-                        and approximate geometry remain limitations.
+                        Using pretrained vanilla 3DGS scenes from the TensoIR Synthetic dataset as input, we evaluate
+                        our method under multiple HDR environment maps and compare the results with inverse-rendering
+                        baselines. Our evaluation demonstrates that our approach allows plausible relighting without
+                        retraining, although baked illumination and approximate geometry remain limitations.
                     </p>
                 </div>
             </div>
@@ -528,9 +528,13 @@
                         </div>
                     </div>
                     <div>
-                        <video class="teaser-media" autoplay muted loop playsinline style="width:100%; margin-bottom:0; box-shadow:none; background:transparent;">
-                            <source src="../images/relightgs/normals.mp4" type="video/mp4">
-                        </video>
+                        <div style="position:relative; overflow:hidden; background:#fff; line-height:0; margin-bottom:14px;">
+                            <video class="teaser-media" autoplay muted loop playsinline style="width:100%; margin:0; box-shadow:none; background:#fff; display:block;">
+                                <source src="../images/relightgs/normals.mp4" type="video/mp4">
+                            </video>
+                            <span style="position:absolute; left:0; right:0; bottom:0; height:2px; background:#fff; pointer-events:none;"></span>
+                            <span style="position:absolute; top:0; bottom:0; right:0; width:2px; background:#fff; pointer-events:none;"></span>
+                        </div>
                         <div class="caption">
                             Normals reconstructed directly from the fixed Gaussian geometry for the
                             armadillo, ficus, hotdog, and lego scenes.
