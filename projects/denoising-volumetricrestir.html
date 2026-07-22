@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <meta name="description"
-          content="Investigating the trade-off between denoising strength and additional Volumetric ReSTIR sampling.">
+        content="Investigating the trade-off between denoising strength and additional Volumetric ReSTIR sampling.">
     <meta name="keywords" content="Volumetric ReSTIR, Denoising, Ray Tracing, Rendering">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Denoising Volumetric ReSTIR</title>
@@ -20,8 +21,7 @@
         gtag('config', 'G-PYVRSFMDRL');
     </script>
 
-    <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
-          rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -31,15 +31,18 @@
         body {
             font-family: 'Noto Sans', sans-serif;
         }
+
         .title.is-1 {
             font-family: 'Google Sans', sans-serif;
             font-weight: 700;
         }
+
         .title.is-3 {
             font-family: 'Google Sans', sans-serif;
             font-weight: 700;
             margin-top: 1rem;
         }
+
         .publication-title {
             font-family: 'Google Sans', sans-serif;
         }
@@ -60,15 +63,18 @@
             border-color: transparent;
             color: #fff;
         }
+
         .button.is-rounded {
             border-radius: 290486px;
             padding-left: 1em;
             padding-right: 1em;
         }
+
         .link-block a {
             margin-top: 15px;
             margin-bottom: 15px;
         }
+
         .hero-body {
             padding: 3rem 1.5rem;
         }
@@ -76,12 +82,14 @@
         /* Custom style for the video wrapper */
         .video-container {
             position: relative;
-            padding-bottom: 56.25%; /* 16:9 */
+            padding-bottom: 56.25%;
+            /* 16:9 */
             height: 0;
             overflow: hidden;
             border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
+
         .video-container video {
             position: absolute;
             top: 0;
@@ -93,7 +101,7 @@
         .teaser-image {
             width: 100%;
             border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
             margin-bottom: 15px;
         }
 
@@ -121,11 +129,13 @@
             gap: 20px;
             margin-top: 20px;
         }
+
         .results-grid img {
             width: 100%;
             border-radius: 5px;
             border: 1px solid #ddd;
         }
+
         .caption {
             text-align: center;
             font-size: 0.9em;
@@ -142,197 +152,235 @@
         }
     </style>
 </head>
+
 <body>
 
 
-<section class="hero">
-    <div class="hero-body">
-        <div class="container is-max-desktop">
-            <div class="columns is-centered">
-                <div class="column has-text-centered">
-                    <h1 class="title is-1 publication-title">Denoising Volumetric ReSTIR</h1>
-                    <div class="is-size-5 publication-authors">
-            <span class="author-block">
-              <a href="https://github.com/KaanAres10">Kaan Altıntaş</a>
-            </span>
-                    </div>
-                    <div class="column has-text-centered">
-                        <div class="publication-links">
-              <span class="link-block">
-                <a href="https://github.com/KaanAres10/Denoising-VolumetricReSTIR"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="fab fa-github"></i>
-                  </span>
-                  <span>Code</span>
-                  </a>
-              </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section class="hero teaser">
-    <div class="container is-max-desktop">
+    <section class="hero">
         <div class="hero-body">
-            <img src="https://raw.githubusercontent.com/KaanAres10/Denoising-VolumetricReSTIR/refs/heads/main/Docs/Cover_Comparison.png" class="teaser-image" alt="Comparison of Volumetric ReSTIR: Base, OIDN, OptiX, Reference">
-            <h2 class="subtitle has-text-centered">
-                Comparison of different denoisers on Complex Scene (an environment populated with fog and over 20,000 emissive
-                triangles). From left to right: No Denoiser (BASE), OIDN, OptiX, and Reference. The annotated values indicate the frame time
-                in milliseconds.
-            </h2>
-        </div>
-    </div>
-</section>
-
-<section class="section">
-    <div class="container is-max-desktop">
-        <div class="columns is-centered has-text-centered">
-            <div class="column is-four-fifths">
-                <h2 class="title is-3">Abstract</h2>
-                <div class="content has-text-justified">
-                    <p>
-                        This project investigates the trade-off between denoising strength and additional Volumetric ReSTIR sampling under a fixed compute budget.
-                        Real-time volumetric rendering pipelines often rely on denoising to suppress noise, but Volumetric ReSTIR itself is designed to produce low variance samples by reusing light transport paths across space and time.
-                    </p>
-                    <p>
-                        The core research question addressed is:
-                        <strong>"Under a fixed frame-time budget, is it more effective to spend compute on stronger denoising, or to allocate that budget to improved Volumetric ReSTIR sampling?"</strong>
-                    </p>
-                    <p>
-                        To answer this, we extended the original Volumetric ReSTIR codebase with multiple denoising configurations (OIDN, OptiX) and performed controlled comparisons across different scenes and camera motions.
-                    </p>
+            <div class="container is-max-desktop">
+                <div class="columns is-centered">
+                    <div class="column has-text-centered">
+                        <h1 class="title is-1 publication-title">Denoising Volumetric ReSTIR</h1>
+                        <div class="is-size-5 publication-authors">
+                            <span class="author-block">
+                                <a href="https://github.com/KaanAres10">Kaan Altıntaş</a>
+                            </span>
+                        </div>
+                        <div class="column has-text-centered">
+                            <div class="publication-links">
+                                <span class="link-block">
+                                    <a href="https://github.com/KaanAres10/Denoising-VolumetricReSTIR"
+                                        class="external-link button is-normal is-rounded is-dark">
+                                        <span class="icon">
+                                            <i class="fab fa-github"></i>
+                                        </span>
+                                        <span>Code</span>
+                                    </a>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="columns is-centered has-text-centered">
-            <div class="column is-four-fifths">
-                <h2 class="title is-3">Video</h2>
-                <div class="video-container">
-                    <video poster="" id="toby" autoplay controls muted loop playsinline height="100%">
-                        <source src="https://github.com/user-attachments/assets/e14cf250-5386-43c5-bc7f-247b2b295c4d"
+    </section>
+
+    <section class="hero teaser">
+        <div class="container is-max-desktop">
+            <div class="hero-body">
+                <img src="https://raw.githubusercontent.com/KaanAres10/Denoising-VolumetricReSTIR/refs/heads/main/docs/images/Cover_Comparison.png"
+                    class="teaser-image" alt="Comparison of Volumetric ReSTIR: Base, OIDN, OptiX, Reference">
+                <h2 class="subtitle has-text-centered">
+                    Comparison of different denoisers on Complex Scene (an environment populated with fog and over
+                    20,000 emissive
+                    triangles). From left to right: No Denoiser (BASE), OIDN, OptiX, and Reference. The annotated values
+                    indicate the frame time
+                    in milliseconds.
+                </h2>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container is-max-desktop">
+            <div class="columns is-centered has-text-centered">
+                <div class="column is-four-fifths">
+                    <h2 class="title is-3">Abstract</h2>
+                    <div class="content has-text-justified">
+                        <p>
+                            This project investigates the trade-off between denoising strength and additional Volumetric
+                            ReSTIR sampling under a fixed compute budget.
+                            Real-time volumetric rendering pipelines often rely on denoising to suppress noise, but
+                            Volumetric ReSTIR itself is designed to produce low variance samples by reusing light
+                            transport paths across space and time.
+                        </p>
+                        <p>
+                            The core research question addressed is:
+                            <strong>"Under a fixed frame-time budget, is it more effective to spend compute on stronger
+                                denoising, or to allocate that budget to improved Volumetric ReSTIR sampling?"</strong>
+                        </p>
+                        <p>
+                            To answer this, we extended the original Volumetric ReSTIR codebase with multiple denoising
+                            configurations (OIDN, OptiX) and performed controlled comparisons across different scenes
+                            and camera motions.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="columns is-centered has-text-centered">
+                <div class="column is-four-fifths">
+                    <h2 class="title is-3">Video</h2>
+                    <div class="video-container">
+                        <video poster="" id="toby" autoplay controls muted loop playsinline height="100%">
+                            <source
+                                src="https://github.com/user-attachments/assets/e14cf250-5386-43c5-bc7f-247b2b295c4d"
                                 type="video/mp4">
-                    </video>
+                        </video>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
 
-<section class="section">
-    <div class="container is-max-desktop">
+    <section class="section">
+        <div class="container is-max-desktop">
 
-        <div class="columns is-centered">
-            <div class="column is-full-width">
-                <h2 class="title is-3">Key Findings</h2>
+            <div class="columns is-centered">
+                <div class="column is-full-width">
+                    <h2 class="title is-3">Key Findings</h2>
 
-                <div class="content has-text-justified">
-                    <ul>
-                        <li>
-                            <strong>Perceptual Quality:</strong> Denoisers significantly reduce perceptual error, especially in complex scenes where noise is most apparent.
-                        </li>
-                        <li>
-                            <strong>Simple Scenes:</strong> In simple volumetric scenes, Volumetric ReSTIR already produces clean samples, making aggressive denoising less beneficial.
-                        </li>
-                        <li>
-                            <strong>Compute Allocation:</strong> Reallocating compute from heavy denoising to increased sampling can recover much of the quality lost by using weaker denoisers.
-                        </li>
-                        <li>
-                            <strong>Efficiency:</strong> Low-quality denoising combined with improved sampling often matches and sometimes exceeds the quality of high-quality denoisers that consume more budget.
-                        </li>
-                        <li>
-                            <strong>Optimization:</strong> Selecting the strongest denoiser is <strong>not always optimal</strong>; the best results often come from a balanced approach between sample quality and denoiser strength.
-                        </li>
-                    </ul>
-                </div>
-
-            </div>
-        </div>
-        <div class="columns is-centered">
-            <div class="column is-full-width">
-                <h2 class="title is-3">Implementation</h2>
-                <div class="content has-text-justified">
-                    <p>
-                        The work builds upon the original implementation of Volumetric ReSTIR by Lin et al. (2021). We integrated the following denoisers as render passes within the Falcor pipeline:
-                    </p>
-                    <ul>
-                        <li>Intel Open Image Denoise (OIDN) – GPU</li>
-                        <li>Intel Open Image Denoise (OIDN) – CPU</li>
-                        <li>NVIDIA OptiX AI Denoiser (Updated to OptiX 9.0 SDK)</li>
-                    </ul>
-
-                    <h4 class="title is-4">Scene Configurations</h4>
-                    <p>
-                        <strong>Simple Scene (Plume):</strong> A single volumetric plume illuminated by an environment map. This setup isolates denoiser behavior in participating media without surface occlusions.
-                        <br>
-                        <strong>Complex Scene (Amazon Bistro):</strong> A geometrically dense environment populated with fog and over 20,000 emissive triangles, introducing complex visibility, occlusion, and lighting interactions.
-                    </p>
-
-                    <div class="results-grid">
-                        <div>
-                            <img src="https://raw.githubusercontent.com/KaanAres10/Denoising-VolumetricReSTIR/main/Docs/oid.png" alt="OIDN Settings">
-                            <div class="caption">OIDN GPU Parameter Selection</div>
-                        </div>
-                        <div>
-                            <img src="https://raw.githubusercontent.com/KaanAres10/Denoising-VolumetricReSTIR/main/Docs/opt.png" alt="OptiX Settings">
-                            <div class="caption">OptiX Denoiser Parameter Selection</div>
-                        </div>
+                    <div class="content has-text-justified">
+                        <ul>
+                            <li>
+                                <strong>Perceptual Quality:</strong> Denoisers significantly reduce perceptual error,
+                                especially in complex scenes where noise is most apparent.
+                            </li>
+                            <li>
+                                <strong>Simple Scenes:</strong> In simple volumetric scenes, Volumetric ReSTIR already
+                                produces clean samples, making aggressive denoising less beneficial.
+                            </li>
+                            <li>
+                                <strong>Compute Allocation:</strong> Reallocating compute from heavy denoising to
+                                increased sampling can recover much of the quality lost by using weaker denoisers.
+                            </li>
+                            <li>
+                                <strong>Efficiency:</strong> Low-quality denoising combined with improved sampling often
+                                matches and sometimes exceeds the quality of high-quality denoisers that consume more
+                                budget.
+                            </li>
+                            <li>
+                                <strong>Optimization:</strong> Selecting the strongest denoiser is <strong>not always
+                                    optimal</strong>; the best results often come from a balanced approach between
+                                sample quality and denoiser strength.
+                            </li>
+                        </ul>
                     </div>
 
                 </div>
             </div>
-        </div>
-    </div>
-</section>
+            <div class="columns is-centered">
+                <div class="column is-full-width">
+                    <h2 class="title is-3">Implementation</h2>
+                    <div class="content has-text-justified">
+                        <p>
+                            The work builds upon the original implementation of Volumetric ReSTIR by Lin et al. (2021).
+                            We integrated the following denoisers as render passes within the Falcor pipeline:
+                        </p>
+                        <ul>
+                            <li>Intel Open Image Denoise (OIDN) – GPU</li>
+                            <li>Intel Open Image Denoise (OIDN) – CPU</li>
+                            <li>NVIDIA OptiX AI Denoiser (Updated to OptiX 9.0 SDK)</li>
+                        </ul>
 
-<section class="section">
-    <div class="container is-max-desktop content">
-        <h2 class="title is-3">References</h2>
-        <div class="references">
-            <p>[Lin 2021] Lin, D., Wyman, C. and Yuksel, C., 2021. Fast volume rendering with spatiotemporal reservoir resampling. <i>ACM Transactions on Graphics (TOG)</i>, 40(6), pp.1-18.</p>
+                        <h4 class="title is-4">Scene Configurations</h4>
+                        <p>
+                            <strong>Simple Scene (Plume):</strong> A single volumetric plume illuminated by an
+                            environment map. This setup isolates denoiser behavior in participating media without
+                            surface occlusions.
+                            <br>
+                            <strong>Complex Scene (Amazon Bistro):</strong> A geometrically dense environment populated
+                            with fog and over 20,000 emissive triangles, introducing complex visibility, occlusion, and
+                            lighting interactions.
+                        </p>
 
-            <p>[Bitterli 2020] Bitterli, B., Wyman, C., Pharr, M., Shirley, P., Lefohn, A. and Jarosz, W., 2020. Spatiotemporal reservoir resampling for real-time ray tracing with dynamic direct lighting. <i>ACM Transactions on Graphics (TOG)</i>, 39(4), pp.1-17.</p>
+                        <div class="results-grid">
+                            <div>
+                                <img src="https://raw.githubusercontent.com/KaanAres10/Denoising-VolumetricReSTIR/refs/heads/main/docs/images/oid.png
+                                    alt=" OIDN Settings">
+                                <div class="caption">OIDN GPU Parameter Selection</div>
+                            </div>
+                            <div>
+                                <img src="https://github.com/KaanAres10/Denoising-VolumetricReSTIR/blob/main/docs/images/opt.png"
+                                    alt="OptiX Settings">
+                                <div class="caption">OptiX Denoiser Parameter Selection</div>
+                            </div>
+                        </div>
 
-            <p>[Andersson 2020] Andersson, P., Nilsson, J., Akenine-Möller, T., Oskarsson, M., Åström, K. and Fairchild, M.D., 2020. FLIP: A Difference Evaluator for Alternating Images. <i>Proc. ACM Comput. Graph. Interact. Tech.</i>, 3(2), pp.1-23.</p>
-
-            <p>[Schied 2017] Schied, C., Kaplanyan, A., Wyman, C., Patney, A., Chaitanya, C.R.A., Burgess, J., Liu, S., Dachsbacher, C., Lefohn, A. and Salvi, M., 2017. Spatiotemporal variance-guided filtering: real-time reconstruction for path-traced global illumination. <i>Proceedings of High Performance Graphics (HPG)</i>.</p>
-
-            <p>[Zhu 2023] Zhu, S., Zhang, X., Röthlin, G., Papas, M. and Meyer, M., 2023. Denoising Production Volumetric Rendering. <i>ACM SIGGRAPH 2023 Talks</i>.</p>
-
-            <p>[Kutz 2017] Kutz, P., Habel, R., Li, Y.K. and Novák, J., 2017. Spectral and decomposition tracking for rendering heterogeneous volumes. <i>ACM Transactions on Graphics (TOG)</i>, 36(4), pp.1-16.</p>
-
-            <p>[Novák 2014] Novák, J., Selle, A. and Jarosz, W., 2014. Residual ratio tracking for estimating attenuation in participating media. <i>ACM Transactions on Graphics (TOG)</i>, 33(6), pp.1-11.</p>
-
-            <p>[NVIDIA 2025] NVIDIA, 2025. NVIDIA OptiX AI-Accelerated Denoiser. Version 9.0.</p>
-
-            <p>[Intel 2025] Intel, 2025. Intel Open Image Denoise. Version 2.3.3.</p>
-
-            <p>[Falcor 2020] Benty, N., Yao, K.H., Clarberg, P., Chen, L., Kallweit, S., Foley, T., Oakes, M., Lavelle, C. and Wyman, C., 2020. The Falcor Rendering Framework.</p>
-
-            <p>[NRD 2025] NVIDIA, 2025. NVIDIA Real-Time Denoisers (NRD).</p>
-        </div>
-    </div>
-</section>
-
-
-<footer class="footer">
-    <div class="container">
-        <div class="columns is-centered">
-            <div class="column is-8">
-                <div class="content">
-                    <p>
-                        Thanks to authors of <a
-                            href="https://github.com/nerfies/nerfies.github.io">Nerfies</a> for the open sourced the template of website.
-                    </p>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</footer>
+    </section>
+
+    <section class="section">
+        <div class="container is-max-desktop content">
+            <h2 class="title is-3">References</h2>
+            <div class="references">
+                <p>[Lin 2021] Lin, D., Wyman, C. and Yuksel, C., 2021. Fast volume rendering with spatiotemporal
+                    reservoir resampling. <i>ACM Transactions on Graphics (TOG)</i>, 40(6), pp.1-18.</p>
+
+                <p>[Bitterli 2020] Bitterli, B., Wyman, C., Pharr, M., Shirley, P., Lefohn, A. and Jarosz, W., 2020.
+                    Spatiotemporal reservoir resampling for real-time ray tracing with dynamic direct lighting. <i>ACM
+                        Transactions on Graphics (TOG)</i>, 39(4), pp.1-17.</p>
+
+                <p>[Andersson 2020] Andersson, P., Nilsson, J., Akenine-Möller, T., Oskarsson, M., Åström, K. and
+                    Fairchild, M.D., 2020. FLIP: A Difference Evaluator for Alternating Images. <i>Proc. ACM Comput.
+                        Graph. Interact. Tech.</i>, 3(2), pp.1-23.</p>
+
+                <p>[Schied 2017] Schied, C., Kaplanyan, A., Wyman, C., Patney, A., Chaitanya, C.R.A., Burgess, J., Liu,
+                    S., Dachsbacher, C., Lefohn, A. and Salvi, M., 2017. Spatiotemporal variance-guided filtering:
+                    real-time reconstruction for path-traced global illumination. <i>Proceedings of High Performance
+                        Graphics (HPG)</i>.</p>
+
+                <p>[Zhu 2023] Zhu, S., Zhang, X., Röthlin, G., Papas, M. and Meyer, M., 2023. Denoising Production
+                    Volumetric Rendering. <i>ACM SIGGRAPH 2023 Talks</i>.</p>
+
+                <p>[Kutz 2017] Kutz, P., Habel, R., Li, Y.K. and Novák, J., 2017. Spectral and decomposition tracking
+                    for rendering heterogeneous volumes. <i>ACM Transactions on Graphics (TOG)</i>, 36(4), pp.1-16.</p>
+
+                <p>[Novák 2014] Novák, J., Selle, A. and Jarosz, W., 2014. Residual ratio tracking for estimating
+                    attenuation in participating media. <i>ACM Transactions on Graphics (TOG)</i>, 33(6), pp.1-11.</p>
+
+                <p>[NVIDIA 2025] NVIDIA, 2025. NVIDIA OptiX AI-Accelerated Denoiser. Version 9.0.</p>
+
+                <p>[Intel 2025] Intel, 2025. Intel Open Image Denoise. Version 2.3.3.</p>
+
+                <p>[Falcor 2020] Benty, N., Yao, K.H., Clarberg, P., Chen, L., Kallweit, S., Foley, T., Oakes, M.,
+                    Lavelle, C. and Wyman, C., 2020. The Falcor Rendering Framework.</p>
+
+                <p>[NRD 2025] NVIDIA, 2025. NVIDIA Real-Time Denoisers (NRD).</p>
+            </div>
+        </div>
+    </section>
+
+
+    <footer class="footer">
+        <div class="container">
+            <div class="columns is-centered">
+                <div class="column is-8">
+                    <div class="content">
+                        <p>
+                            Thanks to authors of <a href="https://github.com/nerfies/nerfies.github.io">Nerfies</a> for
+                            the open sourced the template of website.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
 
 </body>
+
 </html>
