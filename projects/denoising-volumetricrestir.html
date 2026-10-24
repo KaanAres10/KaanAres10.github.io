@@ -200,15 +200,13 @@
     <section class="hero teaser">
         <div class="container is-max-desktop">
             <div class="hero-body">
-                <img src="../images/denoising-volumetricrestir/teaser.png" class="teaser-image"
-                    alt="Light through slats: the reference frame with a box, and for OptiX, OIDN, NRD RELAX, NRD REBLUR and DLSS Ray Reconstruction the error in that box, with strong red and blue patches without mutations and pale maps with five mutations.">
+                <img src="../images/denoising-volumetricrestir/cover.jpg" class="teaser-image" width="1600"
+                    height="800"
+                    alt="A cloud lit by 48 coloured lanterns, split along a diagonal: plain Volumetric ReSTIR on the left with mottled colour, the same frame with five Metropolis–Hastings mutations on the right.">
                 <h2 class="subtitle has-text-centered">
-                    Light through slats with a 200-frame history. Top: the path-traced reference, its whole frame
-                    with the box where plain ReSTIR with OptiX errs most, and the box enlarged. Below: each
-                    denoiser's signed luminance error against the reference in that box, for plain Volumetric
-                    ReSTIR (upper row) and with five Metropolis–Hastings mutations per pixel (lower row). Red is too
-                    bright, blue too dark, grey lies outside the medium; the numbers are relative MSE over the
-                    whole medium.
+                    48 coloured lanterns inside a cloud, through the OptiX denoiser with a 200-frame history: plain
+                    Volumetric ReSTIR left of the line, the same frame with five Metropolis–Hastings mutations per
+                    pixel right of it.
                 </h2>
             </div>
         </div>
@@ -357,6 +355,16 @@
                         </p>
                     </div>
 
+                    <img src="../images/denoising-volumetricrestir/teaser.png" class="figure-image" loading="lazy"
+                        alt="Light through slats: the reference frame with a box, and for OptiX, OIDN, NRD RELAX, NRD REBLUR and DLSS Ray Reconstruction the error in that box, with strong red and blue patches without mutations and pale maps with five mutations.">
+                    <p class="caption">
+                        Light through slats with a 200-frame history. Top: the path-traced reference, its whole frame
+                        with the box where plain ReSTIR with OptiX errs most, and the box enlarged. Below: each
+                        denoiser's signed luminance error against the reference in that box, for plain Volumetric
+                        ReSTIR (upper row) and with five mutations per pixel (lower row). Red is too bright, blue too
+                        dark, grey lies outside the medium; the numbers are relative MSE over the whole medium.
+                    </p>
+
                     <div class="numbers">
                         <div class="box"><span class="value">59–79%</span><span class="label">median error cut after
                                 the denoiser, 200-frame history</span></div>
@@ -410,6 +418,69 @@
                         (blue) and at M cap 200 (orange); bars are medians. Right: M cap 200 with five mutations over
                         plain ReSTIR at the shipped cap; below 1 the long history with mutations is better.
                     </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container is-max-desktop">
+            <div class="columns is-centered">
+                <div class="column is-full-width">
+                    <h2 class="title is-3">Full Frames Through OptiX and DLSS Ray Reconstruction</h2>
+                    <div class="content has-text-justified">
+                        <p>
+                            Two setups in full, one frame each at M cap 200: the whole frame plain and with five
+                            mutations beside the path-traced reference, two zooms where plain ReSTIR errs most, and the
+                            error against the reference inside the medium (red too bright, blue too dark, one scale
+                            per pair of maps). Click a figure to open it at full size.
+                        </p>
+                    </div>
+
+                    <h3 class="title is-4 has-text-centered">Cloud at sunset, backlit</h3>
+                    <div class="columns">
+                        <div class="column is-half">
+                            <a href="../images/denoising-volumetricrestir/sunset_optix.png" target="_blank"
+                                rel="noopener"><img src="../images/denoising-volumetricrestir/sunset_optix.png"
+                                    class="figure-image" loading="lazy"
+                                    alt="Cloud at sunset through OptiX: full frames plain and with five mutations beside the reference, two zooms, and error maps whose patches shrink with mutations."></a>
+                            <p class="caption">OptiX: relative MSE 0.0543 plain, 0.0183 with five mutations.</p>
+                        </div>
+                        <div class="column is-half">
+                            <a href="../images/denoising-volumetricrestir/sunset_rr.png" target="_blank"
+                                rel="noopener"><img src="../images/denoising-volumetricrestir/sunset_rr.png"
+                                    class="figure-image" loading="lazy"
+                                    alt="Cloud at sunset through DLSS Ray Reconstruction: full frames plain and with five mutations beside the reference, two zooms, and error maps."></a>
+                            <p class="caption">DLSS Ray Reconstruction: 0.0499 plain, 0.0216 with five mutations.</p>
+                        </div>
+                    </div>
+
+                    <h3 class="title is-4 has-text-centered">48 coloured lanterns inside a cloud</h3>
+                    <div class="columns">
+                        <div class="column is-half">
+                            <a href="../images/denoising-volumetricrestir/lanterns_optix.png" target="_blank"
+                                rel="noopener"><img src="../images/denoising-volumetricrestir/lanterns_optix.png"
+                                    class="figure-image" loading="lazy"
+                                    alt="48 coloured lanterns through OptiX: full frames plain and with five mutations beside the reference, two zooms, and error maps whose patches shrink with mutations."></a>
+                            <p class="caption">OptiX: relative MSE 0.0505 plain, 0.0097 with five mutations.</p>
+                        </div>
+                        <div class="column is-half">
+                            <a href="../images/denoising-volumetricrestir/lanterns_rr.png" target="_blank"
+                                rel="noopener"><img src="../images/denoising-volumetricrestir/lanterns_rr.png"
+                                    class="figure-image" loading="lazy"
+                                    alt="48 coloured lanterns through DLSS Ray Reconstruction: full frames plain and with five mutations beside the reference, two zooms, and error maps."></a>
+                            <p class="caption">DLSS Ray Reconstruction: 0.0455 plain, 0.0137 with five mutations.</p>
+                        </div>
+                    </div>
+                    <div class="content has-text-justified">
+                        <p>
+                            In the lanterns each pixel takes the colour of the one lantern its sample chose, so reuse
+                            also clumps colour: the plain frames' colour correlation (0.431 through OptiX) falls to
+                            0.191 with mutations. These frames come from earlier single-frame runs, re-scored against
+                            the current references; the numbers above are that frame's, not the two-chain means of the
+                            results section.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
