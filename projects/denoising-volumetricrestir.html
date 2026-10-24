@@ -200,13 +200,18 @@
     <section class="hero teaser">
         <div class="container is-max-desktop">
             <div class="hero-body">
-                <img src="../images/denoising-volumetricrestir/cover.jpg" class="teaser-image" width="1600"
-                    height="800"
-                    alt="A cloud lit by 48 coloured lanterns, split along a diagonal: plain Volumetric ReSTIR on the left with mottled colour, the same frame with five Metropolis–Hastings mutations on the right.">
+                <picture>
+                    <source media="(max-width: 600px)"
+                        srcset="../images/denoising-volumetricrestir/cover_phone.jpg" width="1214" height="750">
+                    <img src="../images/denoising-volumetricrestir/cover.jpg" class="teaser-image" width="1828"
+                        height="600"
+                        alt="Crops of a cloud lit by 192 coloured lights: plain Volumetric ReSTIR full of coloured streaks and blotches, and the same frame with five Metropolis–Hastings mutations, much closer to the smooth path-traced reference.">
+                </picture>
                 <h2 class="subtitle has-text-centered">
-                    48 coloured lanterns inside a cloud, through the OptiX denoiser with a 200-frame history: plain
-                    Volumetric ReSTIR left of the line, the same frame with five Metropolis–Hastings mutations per
-                    pixel right of it.
+                    A cloud lit by 192 coloured lights, through the OptiX denoiser with a 200-frame history. Plain
+                    Volumetric ReSTIR leaves coloured streaks and blotches that the denoiser keeps; five
+                    Metropolis–Hastings mutations per pixel remove most of them. The numbers are the relative MSE in
+                    the medium against the path-traced reference.
                 </h2>
             </div>
         </div>
@@ -284,6 +289,17 @@
                             <code>p_y ← p̂(z)</code>, with the candidate count <code>M</code> unchanged. We add moves
                             for participating media:
                         </p>
+                    </div>
+                    <img src="../images/denoising-volumetricrestir/moves.png" class="figure-image is-narrow"
+                        loading="lazy"
+                        alt="A camera ray enters a medium to the scatter point x1, with a bounce to x2 and dashed connections to a light, each labelled with the moves that change it.">
+                    <p class="caption">
+                        What each move changes. One bounce: the scatter depth of <i>x</i>₁ along the camera ray and the
+                        light sample (dashed from <i>x</i>₁). Two bounces: also the bounce (<i>ω</i>, <i>d</i>) to
+                        <i>x</i>₂, whose light connection the light moves act on; an emitting <i>x</i>₂ is moved by a
+                        small step in volume.
+                    </p>
+                    <div class="content has-text-justified">
                         <div class="table-container">
                             <table class="table is-fullwidth moves">
                                 <thead>
@@ -418,6 +434,25 @@
                         (blue) and at M cap 200 (orange); bars are medians. Right: M cap 200 with five mutations over
                         plain ReSTIR at the shipped cap; below 1 the long history with mutations is better.
                     </p>
+
+                    <h3 class="title is-4">How many mutations</h3>
+                    <div class="content has-text-justified">
+                        <p>
+                            The count matters where each step has only a small chance of changing what a pixel shows.
+                            On five setups built for that, one mutation leaves 28–82% more error than ten after OptiX
+                            at M cap 200. On the swarm of 192 lights, OptiX's error falls with every count, most of it
+                            by three and little after ten.
+                        </p>
+                    </div>
+                    <img src="../images/denoising-volumetricrestir/swarm_counts.png" class="figure-image"
+                        loading="lazy"
+                        alt="The 192-light swarm with 0, 1, 3, 10, 20 and 64 mutations through OptiX and DLSS Ray Reconstruction, with error maps whose blotches fade as the count grows.">
+                    <p class="caption">
+                        The 192-light swarm at M cap 200 with 0 to 64 mutations, through OptiX (first row) and DLSS Ray
+                        Reconstruction (third row), with their error maps against the reference (red too bright, blue
+                        too dark). Ray Reconstruction's overall brightness swings from frame to frame; the last row
+                        divides it out.
+                    </p>
                 </div>
             </div>
         </div>
@@ -427,60 +462,39 @@
         <div class="container is-max-desktop">
             <div class="columns is-centered">
                 <div class="column is-full-width">
-                    <h2 class="title is-3">Full Frames Through OptiX and DLSS Ray Reconstruction</h2>
+                    <h2 class="title is-3">Two More Setups</h2>
                     <div class="content has-text-justified">
                         <p>
-                            Two setups in full, one frame each at M cap 200: the whole frame plain and with five
-                            mutations beside the path-traced reference, two zooms where plain ReSTIR errs most, and the
-                            error against the reference inside the medium (red too bright, blue too dark, one scale
-                            per pair of maps). Click a figure to open it at full size.
+                            Two of the nineteen setups from the paper's appendix, in the layout of the cathedral figure
+                            above: the reference's whole frame with the box where plain ReSTIR with OptiX errs most;
+                            per denoiser, the box plain and with five mutations, each row ending in the reference, with
+                            the relative MSE in the medium above each (mean of two chains); then each one's error
+                            against the reference (red too bright, blue too dark, one scale per figure; grey lies
+                            outside the medium). Click a figure to open it at full size.
                         </p>
-                    </div>
-
-                    <h3 class="title is-4 has-text-centered">Cloud at sunset, backlit</h3>
-                    <div class="columns">
-                        <div class="column is-half">
-                            <a href="../images/denoising-volumetricrestir/sunset_optix.png" target="_blank"
-                                rel="noopener"><img src="../images/denoising-volumetricrestir/sunset_optix.png"
-                                    class="figure-image" loading="lazy"
-                                    alt="Cloud at sunset through OptiX: full frames plain and with five mutations beside the reference, two zooms, and error maps whose patches shrink with mutations."></a>
-                            <p class="caption">OptiX: relative MSE 0.0543 plain, 0.0183 with five mutations.</p>
-                        </div>
-                        <div class="column is-half">
-                            <a href="../images/denoising-volumetricrestir/sunset_rr.png" target="_blank"
-                                rel="noopener"><img src="../images/denoising-volumetricrestir/sunset_rr.png"
-                                    class="figure-image" loading="lazy"
-                                    alt="Cloud at sunset through DLSS Ray Reconstruction: full frames plain and with five mutations beside the reference, two zooms, and error maps."></a>
-                            <p class="caption">DLSS Ray Reconstruction: 0.0499 plain, 0.0216 with five mutations.</p>
-                        </div>
                     </div>
 
                     <h3 class="title is-4 has-text-centered">48 coloured lanterns inside a cloud</h3>
-                    <div class="columns">
-                        <div class="column is-half">
-                            <a href="../images/denoising-volumetricrestir/lanterns_optix.png" target="_blank"
-                                rel="noopener"><img src="../images/denoising-volumetricrestir/lanterns_optix.png"
-                                    class="figure-image" loading="lazy"
-                                    alt="48 coloured lanterns through OptiX: full frames plain and with five mutations beside the reference, two zooms, and error maps whose patches shrink with mutations."></a>
-                            <p class="caption">OptiX: relative MSE 0.0505 plain, 0.0097 with five mutations.</p>
-                        </div>
-                        <div class="column is-half">
-                            <a href="../images/denoising-volumetricrestir/lanterns_rr.png" target="_blank"
-                                rel="noopener"><img src="../images/denoising-volumetricrestir/lanterns_rr.png"
-                                    class="figure-image" loading="lazy"
-                                    alt="48 coloured lanterns through DLSS Ray Reconstruction: full frames plain and with five mutations beside the reference, two zooms, and error maps."></a>
-                            <p class="caption">DLSS Ray Reconstruction: 0.0455 plain, 0.0137 with five mutations.</p>
-                        </div>
-                    </div>
-                    <div class="content has-text-justified">
-                        <p>
-                            In the lanterns each pixel takes the colour of the one lantern its sample chose, so reuse
-                            also clumps colour: the plain frames' colour correlation (0.431 through OptiX) falls to
-                            0.191 with mutations. These frames come from earlier single-frame runs, re-scored against
-                            the current references; the numbers above are that frame's, not the two-chain means of the
-                            results section.
-                        </p>
-                    </div>
+                    <a href="../images/denoising-volumetricrestir/lanterns.png" target="_blank" rel="noopener"><img
+                            src="../images/denoising-volumetricrestir/lanterns.png" class="figure-image is-narrow"
+                            loading="lazy" width="1400" height="1619"
+                            alt="48 coloured lanterns inside a cloud: the reference frame with a box, and for OptiX, OIDN, RELAX, REBLUR and DLSS RR the box without and with five mutations beside the reference, and their error maps, whose red and blue patches mostly vanish with mutations."></a>
+                    <p class="caption">
+                        Each pixel takes the colour of the one lantern its sample chose, so reuse clumps colour as well
+                        as brightness. Five mutations cut the error by 79–81% through OptiX, OIDN, RELAX and Ray
+                        Reconstruction, and by 62% through REBLUR.
+                    </p>
+
+                    <h3 class="title is-4 has-text-centered">Cloud at sunset, backlit</h3>
+                    <a href="../images/denoising-volumetricrestir/sunset.png" target="_blank" rel="noopener"><img
+                            src="../images/denoising-volumetricrestir/sunset.png" class="figure-image is-narrow"
+                            loading="lazy" width="1400" height="1619"
+                            alt="A backlit cloud at sunset: the reference frame with a box at the cloud's lit edge, and for OptiX, OIDN, RELAX, REBLUR and DLSS RR the box without and with five mutations beside the reference, and their error maps."></a>
+                    <p class="caption">
+                        Five mutations cut the error by about half through OptiX, OIDN and Ray Reconstruction (49–52%)
+                        and by 41% through RELAX. Through REBLUR the cut is 11%: its dark speckles at the cloud's edges
+                        are there with and without mutations.
+                    </p>
                 </div>
             </div>
         </div>
