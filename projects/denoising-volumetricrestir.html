@@ -4,10 +4,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="description"
-        content="Investigating the trade-off between denoising strength and additional Volumetric ReSTIR sampling.">
-    <meta name="keywords" content="Volumetric ReSTIR, Denoising, Ray Tracing, Rendering">
+        content="Metropolis–Hastings mutations that break up the blotches Volumetric ReSTIR's reuse leaves, measured through five denoisers.">
+    <meta name="keywords"
+        content="Volumetric ReSTIR, Metropolis-Hastings, MCMC mutations, Decorrelation, Denoising, OptiX, OIDN, NRD, DLSS Ray Reconstruction">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Denoising Volumetric ReSTIR</title>
+    <title>Decorrelating Volumetric ReSTIR</title>
 
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -43,19 +44,25 @@
             margin-top: 1rem;
         }
 
+        .title.is-4 {
+            font-family: 'Google Sans', sans-serif;
+            font-weight: 700;
+        }
+
         .publication-title {
             font-family: 'Google Sans', sans-serif;
+        }
+
+        .publication-subtitle {
+            font-family: 'Google Sans', sans-serif;
+            color: #4a4a4a;
+            margin-top: 0.5rem;
         }
 
         .publication-authors {
             font-family: 'Google Sans', sans-serif;
             font-size: 1.25rem;
-        }
-
-        .publication-venue {
-            color: #555;
-            width: 100%;
-            font-weight: bold;
+            margin-top: 1rem;
         }
 
         .button.is-dark {
@@ -79,30 +86,20 @@
             padding: 3rem 1.5rem;
         }
 
-        /* Custom style for the video wrapper */
-        .video-container {
-            position: relative;
-            padding-bottom: 56.25%;
-            /* 16:9 */
-            height: 0;
-            overflow: hidden;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .video-container video {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        .teaser-image {
+        .teaser-image,
+        .figure-image {
             width: 100%;
             border-radius: 10px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
             margin-bottom: 15px;
+            background: #fff;
+        }
+
+        .figure-image.is-narrow {
+            max-width: 760px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .content h2 {
@@ -110,30 +107,9 @@
             margin-bottom: 1em;
         }
 
-        .interpolation-panel {
-            background: #f5f5f5;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-
         .footer {
             background-color: #f5f5f5;
             padding: 1rem 1rem;
-        }
-
-        /* Comparison image grid */
-        .results-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .results-grid img {
-            width: 100%;
-            border-radius: 5px;
-            border: 1px solid #ddd;
         }
 
         .caption {
@@ -141,14 +117,47 @@
             font-size: 0.9em;
             color: #666;
             margin-top: 5px;
+            margin-bottom: 1.5rem;
         }
 
-        /* Code block styling */
-        pre {
-            background-color: #f5f5f5;
-            padding: 1rem;
-            border-radius: 5px;
-            overflow-x: auto;
+        .equation {
+            text-align: center;
+            font-family: 'Castoro', Georgia, serif;
+            font-style: italic;
+            font-size: 1.2rem;
+            margin: 1rem 0 1.25rem;
+        }
+
+        .numbers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 1.5rem 0;
+        }
+
+        .numbers .box {
+            margin-bottom: 0;
+            text-align: center;
+            box-shadow: none;
+            border: 1px solid #e5e5e5;
+        }
+
+        .numbers .value {
+            font-family: 'Google Sans', sans-serif;
+            font-weight: 700;
+            font-size: 1.6rem;
+            display: block;
+        }
+
+        .numbers .label {
+            font-size: 0.9rem;
+            color: #555;
+            font-weight: 400;
+        }
+
+        .moves td:first-child {
+            font-weight: 700;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -161,7 +170,9 @@
             <div class="container is-max-desktop">
                 <div class="columns is-centered">
                     <div class="column has-text-centered">
-                        <h1 class="title is-1 publication-title">Denoising Volumetric ReSTIR</h1>
+                        <h1 class="title is-1 publication-title">Decorrelating Volumetric ReSTIR</h1>
+                        <h2 class="subtitle is-4 publication-subtitle">with Metropolis–Hastings Mutations, Seen Through
+                            Five Denoisers</h2>
                         <div class="is-size-5 publication-authors">
                             <span class="author-block">
                                 <a href="https://github.com/KaanAres10">Kaan Altıntaş</a>
@@ -189,14 +200,15 @@
     <section class="hero teaser">
         <div class="container is-max-desktop">
             <div class="hero-body">
-                <img src="https://raw.githubusercontent.com/KaanAres10/Denoising-VolumetricReSTIR/refs/heads/main/docs/images/Cover_Comparison.png"
-                    class="teaser-image" alt="Comparison of Volumetric ReSTIR: Base, OIDN, OptiX, Reference">
+                <img src="../images/denoising-volumetricrestir/teaser.png" class="teaser-image"
+                    alt="Light through slats: the reference frame with a box, and for OptiX, OIDN, NRD RELAX, NRD REBLUR and DLSS Ray Reconstruction the error in that box, with strong red and blue patches without mutations and pale maps with five mutations.">
                 <h2 class="subtitle has-text-centered">
-                    Comparison of different denoisers on Complex Scene (an environment populated with fog and over
-                    20,000 emissive
-                    triangles). From left to right: No Denoiser (BASE), OIDN, OptiX, and Reference. The annotated values
-                    indicate the frame time
-                    in milliseconds.
+                    Light through slats with a 200-frame history. Top: the path-traced reference, its whole frame
+                    with the box where plain ReSTIR with OptiX errs most, and the box enlarged. Below: each
+                    denoiser's signed luminance error against the reference in that box, for plain Volumetric
+                    ReSTIR (upper row) and with five Metropolis–Hastings mutations per pixel (lower row). Red is too
+                    bright, blue too dark, grey lies outside the medium; the numbers are relative MSE over the
+                    whole medium.
                 </h2>
             </div>
         </div>
@@ -209,115 +221,265 @@
                     <h2 class="title is-3">Abstract</h2>
                     <div class="content has-text-justified">
                         <p>
-                            This project investigates the trade-off between denoising strength and additional Volumetric
-                            ReSTIR sampling under a fixed compute budget.
-                            Real-time volumetric rendering pipelines often rely on denoising to suppress noise, but
-                            Volumetric ReSTIR itself is designed to produce low variance samples by reusing light
-                            transport paths across space and time.
+                            Volumetric ReSTIR renders participating media at one sample per pixel by reusing samples
+                            across pixels and frames, and the reuse correlates the remaining error into blotches that
+                            denoisers keep. We bring the Metropolis–Hastings mutations of Sawhney et al. to volumes,
+                            with moves along the camera ray, on the light and, at two bounces, on the bounce itself; we
+                            argue the pass is unbiased and a test on ten setups detects no bias (<i>p</i> = 0.55).
                         </p>
                         <p>
-                            The core research question addressed is:
-                            <strong>"Under a fixed frame-time budget, is it more effective to spend compute on stronger
-                                denoising, or to allocate that budget to improved Volumetric ReSTIR sampling?"</strong>
+                            We judge it through five denoisers (OptiX, OIDN, NRD's RELAX and REBLUR, and DLSS Ray
+                            Reconstruction) on 19 setups at two history lengths. With a 200-frame history, five
+                            mutations cut the in-medium error after the denoiser by a median of 59–79% across the
+                            denoisers. At the shipped four-frame history the median cut is 1.5–17%, and plain ReSTIR
+                            there beats the long history with mutations on most setups; the long history wins on 5–7
+                            of the 19, mostly scenes lit by many lights. What mutations cannot change is a pixel's
+                            brightness, which lives in its reservoir's normalization; there a decoupled history removes
+                            more. After a 2.5–4.1× faster pass, five mutations add 10–52% to the frame.
                         </p>
-                        <p>
-                            To answer this, we extended the original Volumetric ReSTIR codebase with multiple denoising
-                            configurations (OIDN, OptiX) and performed controlled comparisons across different scenes
-                            and camera motions.
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div class="columns is-centered has-text-centered">
-                <div class="column is-four-fifths">
-                    <h2 class="title is-3">Video</h2>
-                    <div class="video-container">
-                        <video poster="" id="toby" autoplay controls muted loop playsinline height="100%">
-                            <source
-                                src="https://github.com/user-attachments/assets/e14cf250-5386-43c5-bc7f-247b2b295c4d"
-                                type="video/mp4">
-                        </video>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-
     <section class="section">
         <div class="container is-max-desktop">
+            <div class="columns is-centered">
+                <div class="column is-full-width">
+                    <h2 class="title is-3">The Problem: Reuse Shares Samples</h2>
+                    <div class="content has-text-justified">
+                        <p>
+                            Volumetric ReSTIR [Lin 2021] keeps one sample per pixel in a reservoir: a scatter distance
+                            along the camera ray and a light sample. Spatial reuse lends samples between neighbouring
+                            pixels and temporal reuse carries them into the next frame. After reuse many pixels hold the
+                            same sample, so their errors move together and what is left shows as blotches rather than
+                            grain. A denoiser averages neighbouring pixels, which cancels independent noise but keeps an
+                            error that pixels share.
+                        </p>
+                        <p>
+                            Spatial reuse creates the correlation and the history multiplies it. In the smoke of a
+                            plume, the correlation at 8 pixels rises from 0.016 at the shipped M cap of 4 to 0.120 at a
+                            cap of 200. Through NRD the effect is strongest: on Bistro, the denoised output's covariance
+                            at 8 pixels is 16 times (RELAX) and 60 times (REBLUR) that without reuse, against 1.1 times
+                            through OptiX.
+                        </p>
+                    </div>
+                </div>
+            </div>
 
             <div class="columns is-centered">
                 <div class="column is-full-width">
-                    <h2 class="title is-3">Key Findings</h2>
+                    <h2 class="title is-3">Method: Metropolis–Hastings Mutations for Volumes</h2>
+                    <div class="content has-text-justified">
+                        <p>
+                            After reuse, every pixel runs a short Metropolis–Hastings chain on its own reservoir sample
+                            with its own target <i>p̂</i> [Sawhney 2024]. A step proposes a nearby sample <i>z</i> and
+                            accepts it with probability min(1, <i>p̂</i>(<i>z</i>) / <i>p̂</i>(<i>x</i>)), so the sample
+                            stays distributed as before while each pixel's copy wanders on its own random numbers. The
+                            contribution weight moves with it by Eq. 16 of Sawhney et al., which keeps the estimate
+                            unbiased:
+                        </p>
+                        <p class="equation">W(z) = p̂(x₀) / p̂(z) · W(x₀)</p>
+                        <p>
+                            In the reservoir this is <code>runningSum ← runningSum · p̂(x₀) / p_y</code> and
+                            <code>p_y ← p̂(z)</code>, with the candidate count <code>M</code> unchanged. We add moves
+                            for participating media:
+                        </p>
+                        <div class="table-container">
+                            <table class="table is-fullwidth moves">
+                                <thead>
+                                    <tr>
+                                        <th>Move</th>
+                                        <th>Kind</th>
+                                        <th>What it changes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Depth</td>
+                                        <td>local step</td>
+                                        <td>Pauly et al.'s propagation perturbation of the scatter distance along the
+                                            camera ray [Pauly 2000]</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Free flight</td>
+                                        <td>independence</td>
+                                        <td>a new distance from the renderer's free-flight sampler; it crosses empty
+                                            gaps that a small step cannot</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Light</td>
+                                        <td>local step</td>
+                                        <td>a step of the point on an emissive triangle, or a rotation of an environment
+                                            direction by 0.1–5°</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Re-selection</td>
+                                        <td>independence</td>
+                                        <td>a fresh light sample from the renderer's own light samplers</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Direction, distance, rebounce</td>
+                                        <td>local / independence</td>
+                                        <td>at two bounces, the bounce to the second vertex: turned, stretched, or
+                                            redrawn from the phase function and free flight</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p>
+                            Local steps accept with the ratio above; independence moves correct for their sampler's
+                            density <i>q</i>, accepting with min(1, <i>p̂</i>(<i>z</i>) <i>q</i>(<i>x</i>) /
+                            (<i>p̂</i>(<i>x</i>) <i>q</i>(<i>z</i>))). The pass runs after spatial reuse rather than
+                            after temporal reuse, so the mutated sample is both what is shaded and what the next frame
+                            inherits. We argue the pass is unbiased, and a test on ten setups with 64 seed-paired chains
+                            each detects no bias (χ² = 8.77 on 10 degrees of freedom, <i>p</i> = 0.55).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container is-max-desktop">
+            <div class="columns is-centered">
+                <div class="column is-full-width">
+                    <h2 class="title is-3">Results Through Five Denoisers</h2>
+                    <div class="content has-text-justified">
+                        <p>
+                            We rendered 19 setups (smoke, clouds, explosions, a foggy night street and many-light
+                            swarms, at one and two bounces) with and without five mutations, at the shipped M cap of 4
+                            and at 200, and passed every run through NVIDIA OptiX, Intel OIDN, NRD RELAX and REBLUR,
+                            and DLSS Ray Reconstruction. Each is scored by its relative MSE inside the medium against a
+                            path-traced reference.
+                        </p>
+                    </div>
+
+                    <div class="numbers">
+                        <div class="box"><span class="value">59–79%</span><span class="label">median error cut after
+                                the denoiser, 200-frame history</span></div>
+                        <div class="box"><span class="value">1.5–17%</span><span class="label">median error cut at the
+                                shipped 4-frame history</span></div>
+                        <div class="box"><span class="value">p = 0.55</span><span class="label">bias test over ten
+                                setups: no bias detected</span></div>
+                    </div>
+
+                    <img src="../images/denoising-volumetricrestir/cathedral.png" class="figure-image is-narrow"
+                        alt="Cathedral god rays: the reference frame with a box; for OptiX, OIDN, RELAX, REBLUR and DLSS RR the box without and with five mutations beside the reference, and their error maps, which lose most of their red and blue patches with mutations except through REBLUR.">
+                    <p class="caption">
+                        Cathedral god rays at M cap 200. Top: the reference's whole frame with the box where plain
+                        ReSTIR with OptiX errs most. Below, per denoiser, the box plain and with five mutations, each
+                        row ending in the reference (relative MSE in the medium above each), and each one's error.
+                    </p>
 
                     <div class="content has-text-justified">
                         <ul>
                             <li>
-                                <strong>Perceptual Quality:</strong> Denoisers significantly reduce perceptual error,
-                                especially in complex scenes where noise is most apparent.
+                                <strong>Long history:</strong> with M cap 200 the median cut is 76% through OptiX,
+                                79% through OIDN, 77% through RELAX, 59% through REBLUR and 76% through DLSS Ray
+                                Reconstruction, while the raw frame improves by only 25%. The gain is in the
+                                structure a denoiser would otherwise keep.
                             </li>
                             <li>
-                                <strong>Simple Scenes:</strong> In simple volumetric scenes, Volumetric ReSTIR already
-                                produces clean samples, making aggressive denoising less beneficial.
+                                <strong>Shipped history:</strong> at the shipped cap of four frames the median cut is
+                                15% through OptiX and OIDN, 17% through Ray Reconstruction, and under 4% through
+                                RELAX and REBLUR. A short history shares little, so there is little to undo.
                             </li>
                             <li>
-                                <strong>Compute Allocation:</strong> Reallocating compute from heavy denoising to
-                                increased sampling can recover much of the quality lost by using weaker denoisers.
+                                <strong>Which history to use:</strong> plain ReSTIR at the shipped cap is as good as or
+                                better than the long history with mutations on most setups. The long history with
+                                mutations wins on 5–7 of the 19, mostly scenes lit by many lights.
                             </li>
                             <li>
-                                <strong>Efficiency:</strong> Low-quality denoising combined with improved sampling often
-                                matches and sometimes exceeds the quality of high-quality denoisers that consume more
-                                budget.
+                                <strong>Equal time:</strong> through OptiX at M cap 200, five mutations cut the error by
+                                50–82%; spending the same time on more initial candidates cuts it by at most 21%.
                             </li>
                             <li>
-                                <strong>Optimization:</strong> Selecting the strongest denoiser is <strong>not always
-                                    optimal</strong>; the best results often come from a balanced approach between
-                                sample quality and denoiser strength.
+                                <strong>Cost:</strong> two optimisations made the pass 2.5–4.1× faster, after which five
+                                mutations add 10–52% to the frame. Three mutations stay within 2–12% of five's error.
                             </li>
                         </ul>
                     </div>
 
+                    <img src="../images/denoising-volumetricrestir/history.png" class="figure-image"
+                        alt="Dot plots per denoiser of each setup's relative MSE with five mutations over without, at the shipped cap and at M cap 200, and of M cap 200 with mutations over plain ReSTIR at the shipped cap.">
+                    <p class="caption">
+                        Left: each setup's in-medium relative MSE with five mutations over without, at the shipped cap
+                        (blue) and at M cap 200 (orange); bars are medians. Right: M cap 200 with five mutations over
+                        plain ReSTIR at the shipped cap; below 1 the long history with mutations is better.
+                    </p>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container is-max-desktop">
+            <div class="columns is-centered">
+                <div class="column is-full-width">
+                    <h2 class="title is-3">Limits</h2>
+                    <div class="content has-text-justified">
+                        <p>
+                            A pixel's estimate is (<i>f</i> / <i>p̂</i>)(<i>z</i>) · <i>ĉ</i> with <i>ĉ</i> =
+                            runningSum / <i>M</i>. Since <i>p̂</i> is close to the luminance of <i>f</i>, a pixel's
+                            brightness lives mostly in <i>ĉ</i>, which Eq. 16 keeps unchanged. With spatial reuse's
+                            output as the next frame's history, <i>ĉ</i> becomes a shared, blotchy field of its own: on
+                            a swarm of 192 coloured lights, 97–98% of the blotch variance in brightness error lies in
+                            <i>ĉ</i>.
+                        </p>
+                    </div>
+                    <img src="../images/denoising-volumetricrestir/chat.png" class="figure-image is-narrow"
+                        alt="The swarm: raw frames for plain ReSTIR, ten mutations and a decoupled history, their brightness errors, and the part of each error in the normalization; the blotches match row for row.">
+                    <p class="caption">
+                        The swarm at M cap 200: the raw frame (top), its brightness error against the reference
+                        (middle), and the part of that error in the reservoir's normalization <i>ĉ</i> (bottom). The
+                        blotches that ten mutations leave sit where <i>ĉ</i>'s are; a decoupled history removes them.
+                    </p>
+                    <div class="content has-text-justified">
+                        <ul>
+                            <li>
+                                <strong>A decoupled history removes more:</strong> keeping spatial reuse's output out of
+                                the history [Zhou 2025] brings the swarm's error through OptiX to 0.0273, against
+                                0.0499 with ten mutations.
+                            </li>
+                            <li>
+                                <strong>Ray Reconstruction darkens its input:</strong> its output sits at 0.72–1.07 of
+                                the reference's brightness across setups (OptiX 0.91–1.08), so its relative MSE partly
+                                ranks brightness.
+                            </li>
+                            <li>
+                                <strong>Surfaces are not moved:</strong> only paths whose first vertex lies in the
+                                medium mutate.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
             <div class="columns is-centered">
                 <div class="column is-full-width">
                     <h2 class="title is-3">Implementation</h2>
                     <div class="content has-text-justified">
                         <p>
-                            The work builds upon the original implementation of Volumetric ReSTIR by Lin et al. (2021).
-                            We integrated the following denoisers as render passes within the Falcor pipeline:
+                            The work builds on our port of Volumetric ReSTIR [Lin 2021] to Falcor 9.0 [Falcor 2022]
+                            with GVDB volumes [Hoetzlein 2016]. The mutation pass is a compute pass after spatial reuse.
+                            All runs use one laptop with an NVIDIA GeForce RTX 5070 Laptop GPU (8 GB). The denoisers
+                            are integrated as render passes in the Falcor pipeline:
                         </p>
                         <ul>
-                            <li>Intel Open Image Denoise (OIDN) – GPU</li>
-                            <li>Intel Open Image Denoise (OIDN) – CPU</li>
-                            <li>NVIDIA OptiX AI Denoiser (Updated to OptiX 9.0 SDK)</li>
+                            <li>NVIDIA OptiX AI Denoiser 9.1, in its temporal mode with guide images made for volumes
+                            </li>
+                            <li>Intel Open Image Denoise 2.3.3 on the GPU</li>
+                            <li>NVIDIA NRD 4.17 RELAX and REBLUR, in spherical-harmonics mode, with the medium and the
+                                surfaces denoised separately</li>
+                            <li>NVIDIA DLSS Ray Reconstruction (DLL 310.9.1, preset E) at native resolution</li>
                         </ul>
-
-                        <h4 class="title is-4">Scene Configurations</h4>
                         <p>
-                            <strong>Simple Scene (Plume):</strong> A single volumetric plume illuminated by an
-                            environment map. This setup isolates denoiser behavior in participating media without
-                            surface occlusions.
-                            <br>
-                            <strong>Complex Scene (Amazon Bistro):</strong> A geometrically dense environment populated
-                            with fog and over 20,000 emissive triangles, introducing complex visibility, occlusion, and
-                            lighting interactions.
+                            The references are path traced with decomposition tracking [Kutz 2017] for free flights and
+                            ratio tracking [Novák 2014] for shadow rays, over 2048 frames of 16 samples per pixel.
                         </p>
-
-                        <div class="results-grid">
-                            <div>
-                                <img src="https://raw.githubusercontent.com/KaanAres10/Denoising-VolumetricReSTIR/refs/heads/main/docs/images/oid.png"
-                                    alt=" OIDN Settings">
-                                <div class="caption">OIDN GPU Parameter Selection</div>
-                            </div>
-                            <div>
-                                <img src="https://raw.githubusercontent.com/KaanAres10/Denoising-VolumetricReSTIR/refs/heads/main/docs/images/opt.png"
-                                    alt="OptiX Settings">
-                                <div class="caption">OptiX Denoiser Parameter Selection</div>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
             </div>
@@ -329,38 +491,64 @@
             <h2 class="title is-3">References</h2>
             <div class="references">
                 <p>[Lin 2021] Lin, D., Wyman, C. and Yuksel, C., 2021. Fast volume rendering with spatiotemporal
-                    reservoir resampling. <i>ACM Transactions on Graphics (TOG)</i>, 40(6), pp.1-18.</p>
+                    reservoir resampling. <i>ACM Transactions on Graphics (TOG)</i>, 40(6).</p>
 
                 <p>[Bitterli 2020] Bitterli, B., Wyman, C., Pharr, M., Shirley, P., Lefohn, A. and Jarosz, W., 2020.
                     Spatiotemporal reservoir resampling for real-time ray tracing with dynamic direct lighting. <i>ACM
-                        Transactions on Graphics (TOG)</i>, 39(4), pp.1-17.</p>
+                        Transactions on Graphics (TOG)</i>, 39(4).</p>
 
-                <p>[Andersson 2020] Andersson, P., Nilsson, J., Akenine-Möller, T., Oskarsson, M., Åström, K. and
-                    Fairchild, M.D., 2020. FLIP: A Difference Evaluator for Alternating Images. <i>Proc. ACM Comput.
-                        Graph. Interact. Tech.</i>, 3(2), pp.1-23.</p>
+                <p>[Sawhney 2024] Sawhney, R., Lin, D., Kettunen, M., Bitterli, B., Ramamoorthi, R., Wyman, C. and
+                    Pharr, M., 2024. Decorrelating ReSTIR Samplers via MCMC Mutations. <i>ACM Transactions on Graphics
+                        (TOG)</i>, 43(1).</p>
+
+                <p>[Talbot 2005] Talbot, J., Cline, D. and Egbert, P., 2005. Importance Resampling for Global
+                    Illumination. <i>Eurographics Symposium on Rendering</i>, pp. 139–146.</p>
+
+                <p>[Hastings 1970] Hastings, W.K., 1970. Monte Carlo Sampling Methods Using Markov Chains and Their
+                    Applications. <i>Biometrika</i>, 57(1), pp. 97–109.</p>
+
+                <p>[Pauly 2000] Pauly, M., Kollig, T. and Keller, A., 2000. Metropolis Light Transport for
+                    Participating Media. <i>Rendering Techniques 2000 (Eurographics Workshop on Rendering)</i>, pp.
+                    11–22.</p>
+
+                <p>[Kelemen 2002] Kelemen, C., Szirmay-Kalos, L., Antal, G. and Csonka, F., 2002. A Simple and Robust
+                    Mutation Strategy for the Metropolis Light Transport Algorithm. <i>Computer Graphics Forum</i>,
+                    21(3), pp. 531–540.</p>
+
+                <p>[Zhou 2025] Zhou, W., 2025. Correlation-Aware Rendering: Improving Sampling and Denoising for
+                    Realistic Image Synthesis. <i>PhD thesis, University of Waterloo</i>.</p>
+
+                <p>[Kutz 2017] Kutz, P., Habel, R., Li, Y.K. and Novák, J., 2017. Spectral and decomposition tracking
+                    for rendering heterogeneous volumes. <i>ACM Transactions on Graphics (TOG)</i>, 36(4).</p>
+
+                <p>[Novák 2014] Novák, J., Selle, A. and Jarosz, W., 2014. Residual ratio tracking for estimating
+                    attenuation in participating media. <i>ACM Transactions on Graphics (TOG)</i>, 33(6).</p>
+
+                <p>[Chaitanya 2017] Chaitanya, C.R.A., Kaplanyan, A.S., Schied, C., Salvi, M., Lefohn, A.,
+                    Nowrouzezahrai, D. and Aila, T., 2017. Interactive Reconstruction of Monte Carlo Image Sequences
+                    Using a Recurrent Denoising Autoencoder. <i>ACM Transactions on Graphics (TOG)</i>, 36(4).</p>
 
                 <p>[Schied 2017] Schied, C., Kaplanyan, A., Wyman, C., Patney, A., Chaitanya, C.R.A., Burgess, J., Liu,
                     S., Dachsbacher, C., Lefohn, A. and Salvi, M., 2017. Spatiotemporal variance-guided filtering:
                     real-time reconstruction for path-traced global illumination. <i>Proceedings of High Performance
                         Graphics (HPG)</i>.</p>
 
-                <p>[Zhu 2023] Zhu, S., Zhang, X., Röthlin, G., Papas, M. and Meyer, M., 2023. Denoising Production
-                    Volumetric Rendering. <i>ACM SIGGRAPH 2023 Talks</i>.</p>
+                <p>[Zhdan 2021] Zhdan, D., 2021. ReBLUR: A Hierarchical Recurrent Denoiser. <i>Ray Tracing Gems II</i>,
+                    pp. 823–844.</p>
 
-                <p>[Kutz 2017] Kutz, P., Habel, R., Li, Y.K. and Novák, J., 2017. Spectral and decomposition tracking
-                    for rendering heterogeneous volumes. <i>ACM Transactions on Graphics (TOG)</i>, 36(4), pp.1-16.</p>
+                <p>[NRD 2026] NVIDIA, 2026. NVIDIA Real-Time Denoisers (NRD). Version 4.17.</p>
 
-                <p>[Novák 2014] Novák, J., Selle, A. and Jarosz, W., 2014. Residual ratio tracking for estimating
-                    attenuation in participating media. <i>ACM Transactions on Graphics (TOG)</i>, 33(6), pp.1-11.</p>
+                <p>[Áfra 2026] Áfra, A.T., 2026. Intel Open Image Denoise. Version 2.3.3.</p>
 
-                <p>[NVIDIA 2025] NVIDIA, 2025. NVIDIA OptiX AI-Accelerated Denoiser. Version 9.0.</p>
+                <p>[Einhorn 2023] Einhorn, E. and Mawdsley, J., 2023. Generate Groundbreaking Ray-Traced Images with
+                    Next-Generation NVIDIA DLSS. <i>NVIDIA Technical Blog</i>.</p>
 
-                <p>[Intel 2025] Intel, 2025. Intel Open Image Denoise. Version 2.3.3.</p>
+                <p>[Hoetzlein 2016] Hoetzlein, R.K., 2016. GVDB: Raytracing Sparse Voxel Database Structures on the
+                    GPU. <i>High Performance Graphics</i>, pp. 109–117.</p>
 
-                <p>[Falcor 2020] Benty, N., Yao, K.H., Clarberg, P., Chen, L., Kallweit, S., Foley, T., Oakes, M.,
-                    Lavelle, C. and Wyman, C., 2020. The Falcor Rendering Framework.</p>
-
-                <p>[NRD 2025] NVIDIA, 2025. NVIDIA Real-Time Denoisers (NRD).</p>
+                <p>[Falcor 2022] Kallweit, S., Clarberg, P., Kolb, C., Davidovič, T., Yao, K.-H., Foley, T., He, Y.,
+                    Wu, L., Chen, L., Akenine-Möller, T., Wyman, C., Crassin, C. and Benty, N., 2022. The Falcor
+                    Rendering Framework. Version 9.0.</p>
             </div>
         </div>
     </section>
